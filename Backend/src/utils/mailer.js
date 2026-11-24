@@ -1,4 +1,5 @@
 // Envío real de correo con Nodemailer (SMTP). Se configura en el archivo .env.
+const fs = require("fs");
 const nodemailer = require("nodemailer");
 
 function crearTransporte() {
@@ -16,10 +17,49 @@ function crearTransporte() {
   });
 }
 
+// Si MAILTRAP_API_TOKEN existe se usa la API HTTP de Mailtrap (entrega real, con dominio verificado);
+// si no, se cae al SMTP de siempre. attachments: [{ filename, path }].
+async function enviar({ to, subject, text, html, attachments = [] }) {
+  const { MAILTRAP_API_TOKEN, MAILTRAP_FROM_EMAIL, MAILTRAP_FROM_NAME } = process.env;
+  if (!MAILTRAP_API_TOKEN) {
+    return crearTransporte().sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to,
+      subject,
+      text,
+      html,
+      attachments,
+    });
+  }
+  if (!MAILTRAP_FROM_EMAIL) {
+    const error = new Error("MAILTRAP_FROM_EMAIL no configurado");
+    error.code = "SMTP_NO_CONFIGURADO";
+    throw error;
+  }
+  const respuesta = await fetch("https://send.api.mailtrap.io/api/send", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${MAILTRAP_API_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from: { email: MAILTRAP_FROM_EMAIL, name: MAILTRAP_FROM_NAME || "Portal de Autogestión" },
+      to: [{ email: to }],
+      subject,
+      text,
+      html,
+      category: "Portal Autogestion",
+      attachments: await Promise.all(
+        attachments.map(async (a) => ({
+          filename: a.filename,
+          content: (await fs.promises.readFile(a.path)).toString("base64"),
+          disposition: "attachment",
+        }))
+      ),
+    }),
+  });
+  if (!respuesta.ok) throw new Error(`Mailtrap API ${respuesta.status}: ${await respuesta.text()}`);
+}
+
 async function enviarCertificado({ para, nombre, consecutivo, rutaPdf, nombreArchivo }) {
-  const transporte = crearTransporte();
-  await transporte.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  await enviar({
     to: para,
     subject: `Certificación laboral N.° ${consecutivo} - Portal de Autogestión`,
     text:
@@ -30,10 +70,8 @@ async function enviarCertificado({ para, nombre, consecutivo, rutaPdf, nombreArc
 }
 
 async function enviarRecuperacionContrasena({ para, nombre, enlace, minutos = 30 }) {
-  const transporte = crearTransporte();
   const saludo = nombre ? `Hola ${nombre}` : "Hola";
-  await transporte.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
+  await enviar({
     to: para,
     subject: "Restablece tu contraseña - Portal de Autogestión",
     text:
