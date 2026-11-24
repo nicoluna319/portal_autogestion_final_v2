@@ -1,6 +1,6 @@
 const { pool } = require("../config/db");
 const { hashear } = require("../utils/passwords");
-const { validarUsuario, validarPersona, nombreCompleto, texto } = require("../utils/validaciones");
+const { validarUsuario, validarPersona, nombreCompleto, texto, limpiarDocumentoBusqueda, tokensBusqueda } = require("../utils/validaciones");
 const { manejarError } = require("../utils/errores");
 
 const COLUMNAS = `id_usuario, nombre, correo, id_rol, id_estado, tipo_documento, numero_documento,
@@ -18,12 +18,35 @@ async function listarOConsultar(req, res) {
   try {
     const { id, documento } = req.query;
     if (id || documento) {
-      const [rows] = await pool.query(
-        `SELECT ${COLUMNAS} FROM usuarios WHERE ${id ? "id_usuario" : "numero_documento"} = ?`,
-        [id || texto(documento)]
-      );
+      const docLimpio = documento ? limpiarDocumentoBusqueda(documento) : "";
+      if (documento && !docLimpio) return res.status(404).json({ mensaje: "Usuario no encontrado" });
+      const [rows] = id
+        ? await pool.query(`SELECT ${COLUMNAS} FROM usuarios WHERE id_usuario = ?`, [id])
+        : await pool.query(
+            `SELECT ${COLUMNAS} FROM usuarios
+             WHERE LOWER(REPLACE(REPLACE(REPLACE(numero_documento, '-', ''), '.', ''), ' ', '')) = ?`,
+            [docLimpio]
+          );
       if (rows.length === 0) return res.status(404).json({ mensaje: "Usuario no encontrado" });
       return res.status(200).json(rows[0]);
+    }
+    const { page, limit, q } = req.query;
+    if (page !== undefined) {
+      const pagina = Math.max(1, Number(page) || 1);
+      const tam = Math.min(100, Math.max(1, Number(limit) || 25));
+      const offset = (pagina - 1) * tam;
+      const tokens = tokensBusqueda(q);
+      const whereParts = tokens.map(
+        () => "(nombre LIKE ? OR REPLACE(REPLACE(REPLACE(numero_documento, '-', ''), '.', ''), ' ', '') LIKE ? OR correo LIKE ?)"
+      );
+      const whereSql = whereParts.length ? `WHERE ${whereParts.join(" AND ")}` : "";
+      const likeParams = tokens.flatMap((t) => [`%${t}%`, `%${t}%`, `%${t}%`]);
+      const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM usuarios ${whereSql}`, likeParams);
+      const [datos] = await pool.query(
+        `SELECT ${COLUMNAS} FROM usuarios ${whereSql} ORDER BY primer_apellido, primer_nombre, id_usuario LIMIT ? OFFSET ?`,
+        [...likeParams, tam, offset]
+      );
+      return res.status(200).json({ datos, total, page: pagina, limit: tam, totalPaginas: Math.ceil(total / tam) });
     }
     const [rows] = await pool.query(`SELECT ${COLUMNAS} FROM usuarios ORDER BY primer_apellido, primer_nombre, id_usuario`);
     return res.status(200).json(rows);

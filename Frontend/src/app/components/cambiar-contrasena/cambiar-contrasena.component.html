@@ -1,31 +1,41 @@
 <div class="mx-auto max-w-lg animate-scale-in">
   <div class="card">
-    <span class="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-amber-50 text-amber-600 animate-float" aria-hidden="true">
+    <span class="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-warning-bg text-warning" aria-hidden="true">
       <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="15" r="4"/><path d="M10.8 12.2 20 3M17 6l3 3M14 9l2 2"/></svg>
     </span>
     <h1 class="titulo-pagina !text-2xl">Cambiar contraseña</h1>
-    <p class="ayuda mb-5 mt-1">Escribe tu contraseña actual y elige una nueva de mínimo 6 caracteres.</p>
+    <p class="ayuda mb-4 mt-1">Escribe tu contraseña actual y elige una nueva de mínimo 6 caracteres.</p>
 
-    <div class="alerta" [class.alerta-error]="tipoMensaje === 'error'" [attr.role]="tipoMensaje === 'error' ? 'alert' : 'status'" *ngIf="mensaje">{{ mensaje }}</div>
+    <div *ngIf="esCambioObligatorio" class="alerta alerta-warn" role="alert" aria-live="assertive" aria-atomic="true">
+      <span><strong>Cambio requerido en primer ingreso:</strong> tu cuenta tiene una contraseña temporal asignada en la carga masiva. Actualízala para acceder al portal.</span>
+    </div>
+
+    <div class="alerta" [class.alerta-error]="tipoMensaje === 'error'" [attr.role]="tipoMensaje === 'error' ? 'alert' : 'status'" [attr.aria-live]="tipoMensaje === 'error' ? 'assertive' : 'polite'" aria-atomic="true" *ngIf="mensaje">{{ mensaje }}</div>
 
     <form (ngSubmit)="guardar()" class="space-y-4">
       <div>
         <label class="label" for="actual">Contraseña actual</label>
-        <input id="actual" class="input" name="actual" [type]="verClaves ? 'text' : 'password'" [(ngModel)]="actual" autocomplete="current-password" required />
+        <input id="actual" class="input" name="actual" [type]="verClaves ? 'text' : 'password'" spellcheck="false" [(ngModel)]="actual" autocomplete="current-password" placeholder="Ingresa tu contraseña actual…" required />
       </div>
       <div>
         <label class="label" for="nueva">Nueva contraseña</label>
-        <input id="nueva" class="input" name="nueva" [type]="verClaves ? 'text' : 'password'" [(ngModel)]="nueva" autocomplete="new-password" required />
+        <input id="nueva" class="input" name="nueva" [type]="verClaves ? 'text' : 'password'" spellcheck="false" [(ngModel)]="nueva" autocomplete="new-password" placeholder="Mínimo 6 caracteres…" required />
       </div>
       <div>
         <label class="label" for="confirmar">Confirmar nueva contraseña</label>
-        <input id="confirmar" class="input" name="confirmar" [type]="verClaves ? 'text' : 'password'" [(ngModel)]="confirmar" autocomplete="new-password" required />
+        <input id="confirmar" class="input" name="confirmar" [type]="verClaves ? 'text' : 'password'" spellcheck="false" [(ngModel)]="confirmar" autocomplete="new-password" placeholder="Repite la nueva contraseña…" required />
       </div>
-      <label class="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-sm font-medium"><input type="checkbox" [(ngModel)]="verClaves" name="verClaves" /> Mostrar contraseñas</label>
+      <label class="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-sm font-medium text-foreground">
+        <input type="checkbox" [(ngModel)]="verClaves" name="verClaves" />
+        <span>Mostrar contraseñas</span>
+      </label>
 
       <div class="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
-        <button type="button" class="btn-secundario" (click)="volver()">Volver</button>
-        <button type="submit" class="btn-primario" [disabled]="guardando || !actual || !nueva || !confirmar">{{ guardando ? "Guardando…" : "Guardar contraseña" }}</button>
+        <button *ngIf="!esCambioObligatorio" type="button" class="btn-secundario" (click)="volver()">Volver</button>
+        <button type="submit" class="btn-primario" [disabled]="guardando || !actual || !nueva || !confirmar" [attr.aria-busy]="guardando">
+          <svg *ngIf="guardando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <span>{{ guardando ? "Guardando…" : "Guardar contraseña" }}</span>
+        </button>
       </div>
     </form>
   </div>

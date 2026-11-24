@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Diseño — Portal de Autogestión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy-950: #071A4D; --navy-900: #0A2266; --navy-800: #0F2F80; --navy-700: #1B4FBF;
+      --navy-600: #2E6BE6; --navy-500: #4B83F0; --navy-200: #C8DAFD; --navy-100: #E3ECFF; --navy-50: #F1F5FF;
+      --amber-800: #7A5300; --amber-600: #B5790A; --amber-500: #EF9F27; --amber-300: #F6B84A; --amber-50: #FFF6E5;
+      --ok: #1B7F3A; --ok-dark: #14602B; --ok-bg: #EAF7EE; --ok-border: #A7DFB9;
+      --err: #B83232; --err-dark: #8F2020; --err-bg: #FCEBEB; --err-border: #F3BABA;
+      --info: #0369A1; --info-dark: #075985; --info-bg: #E0F2FE; --info-border: #BAE6FD;
+
+      --canvas: #F4F6FB;
+      --surface: #FFFFFF;
+      --surface-subtle: #F8FAFC;
+      --surface-tint: #F1F5FF;
+      --fg: #1A1F2E;
+      --fg-heading: #0F2F80;
+      --fg-muted: #4A5675;
+      --border: #DDE3F0;
+      --border-strong: #CBD4E6;
+      --primary: #1B4FBF;
+      --primary-hover: #0F2F80;
+      --shadow-card: 0 1px 2px rgba(15, 47, 128, .06), 0 8px 24px -12px rgba(15, 47, 128, .18);
+      --font-sans: "DM Sans", "Segoe UI", Arial, sans-serif;
+      --font-mono: "JetBrains Mono", "Cascadia Code", ui-monospace, monospace;
+    }
+    .dark {
+      --canvas: #081024;
+      --surface: #0F1A36;
+      --surface-subtle: #16254A;
+      --surface-tint: #16254A;
+      --fg: #F1F5FF;
+      --fg-heading: #E3ECFF;
+      --fg-muted: #A9B8D9;
+      --border: #253864;
+      --border-strong: #324A80;
+      --primary: #4B83F0;
+      --primary-hover: #7CA5F5;
+      --shadow-card: 0 1px 2px rgba(0, 0, 0, .25), 0 12px 28px -12px rgba(0, 0, 0, .55);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: var(--font-sans); background: var(--canvas); color: var(--fg);
+      line-height: 1.5; transition: background .2s ease, color .2s ease;
+    }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 64px; }
+    .hero {
+      background: linear-gradient(135deg, var(--navy-950), var(--navy-800), var(--navy-700));
+      color: #fff; border-radius: 20px; padding: 32px; display: flex; flex-wrap: wrap;
+      align-items: center; justify-content: space-between; gap: 16px;
+      box-shadow: 0 14px 32px -12px rgba(7, 26, 77, .45); margin-bottom: 28px;
+    }
+    .hero small { color: var(--amber-300); font-weight: 700; text-transform: uppercase; letter-spacing: .12em; font-size: 11px; }
+    .hero h1 { margin: 6px 0 6px; font-size: 28px; letter-spacing: -.02em; }
+    .hero p { margin: 0; color: rgba(255,255,255,.84); font-size: 14px; max-width: 620px; }
+    .toggle {
+      background: rgba(255,255,255,.14); color: #fff; border: 1px solid rgba(255,255,255,.28);
+      border-radius: 12px; padding: 10px 16px; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    .toggle:hover { background: rgba(255,255,255,.22); }
+    .section {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 24px; box-shadow: var(--shadow-card); margin-bottom: 24px;
+    }
+    .section h2 {
+      margin: 0 0 16px; font-size: 18px; color: var(--fg-heading);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section h2::before { content: ""; width: 6px; height: 20px; border-radius: 999px; background: var(--amber-500); }
+    .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(175px, 1fr)); }
+    .swatch { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface-subtle); }
+    .swatch-color { height: 64px; display: flex; align-items: flex-end; padding: 8px 10px; font-size: 11px; font-weight: 700; }
+    .swatch-meta { padding: 10px 12px; font-size: 12px; }
+    .swatch-meta strong { display: block; color: var(--fg); }
+    .swatch-meta code { font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted); }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      min-height: 44px; padding: 10px 20px; border-radius: 12px; font-size: 14px; font-weight: 700;
+      border: 1px solid transparent; cursor: pointer; font-family: inherit; transition: .15s ease;
+    }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary { background: var(--surface); color: var(--fg); border-color: var(--border-strong); }
+    .btn-accent { background: var(--amber-500); color: var(--navy-900); }
+    .btn-success { background: var(--ok); color: #fff; }
+    .btn-danger { background: var(--err); color: #fff; }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+      font-size: 12px; font-weight: 700;
+    }
+    .badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .b-ok { background: var(--ok-bg); color: var(--ok-dark); }
+    .b-warn { background: var(--amber-50); color: var(--amber-800); }
+    .b-err { background: var(--err-bg); color: var(--err-dark); }
+    .b-info { background: var(--info-bg); color: var(--info-dark); }
+    .alert { border-radius: 12px; padding: 12px 16px; font-size: 14px; font-weight: 500; border: 1px solid; margin-top: 10px; }
+    .a-ok { background: var(--ok-bg); color: var(--ok-dark); border-color: var(--ok-border); }
+    .a-warn { background: var(--amber-50); color: var(--amber-800); border-color: #FBD58E; }
+    .a-err { background: var(--err-bg); color: var(--err-dark); border-color: var(--err-border); }
+    .a-info { background: var(--info-bg); color: var(--info-dark); border-color: var(--info-border); }
+    .input {
+      min-height: 46px; width: 100%; max-width: 320px; border-radius: 12px; padding: 10px 14px;
+      border: 1px solid var(--border-strong); background: var(--surface); color: var(--fg); font: 15px var(--font-sans);
+    }
+    .input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(27,79,191,.22); }
+    .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { background: var(--navy-900); color: #fff; text-align: left; padding: 12px 14px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+    tbody tr:hover { background: var(--surface-tint); }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <div>
+        <small>Design System · 3-Layer Token Architecture</small>
+        <h1>Portal de Autogestión</h1>
+        <p>Sistema visual institucional (Navy + Ámbar cálido), tokens DTCG en 3 capas (Primitive → Semantic → Component) y cumplimiento WCAG 2.1 AA/AAA.</p>
+      </div>
+      <button type="button" class="toggle" onclick="document.documentElement.classList.toggle('dark')">Alternar Claro / Oscuro</button>
+    </header>
+
+    <section class="section">
+      <h2>Paleta Semántica y Contraste WCAG</h2>
+      <div class="grid">
+        <div class="swatch"><div class="swatch-color" style="background:#1B4FBF;color:#fff">AAA · 7.20:1</div><div class="swatch-meta"><strong>Primary</strong><code>--color-primary · #1B4FBF</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#0F2F80;color:#fff">AAA · 12.08:1</div><div class="swatch-meta"><strong>Primary Hover</strong><code>--color-primary-hover · #0F2F80</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#0A2266;color:#fff">Sidebar / Header</div><div class="swatch-meta"><strong>Navy 900</strong><code>--navy-900 · #0A2266</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#EF9F27;color:#0A2266">AA+ · 6.74:1</div><div class="swatch-meta"><strong>Accent (CTA)</strong><code>--color-accent · #EF9F27</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#1B7F3A;color:#fff">AA · 5.07:1</div><div class="swatch-meta"><strong>Success</strong><code>--color-success · #1B7F3A</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#B83232;color:#fff">AA+ · 5.93:1</div><div class="swatch-meta"><strong>Danger</strong><code>--color-danger · #B83232</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#0369A1;color:#fff">AA+ · 5.93:1</div><div class="swatch-meta"><strong>Info</strong><code>--color-info · #0369A1</code></div></div>
+        <div class="swatch"><div class="swatch-color" style="background:#F4F6FB;color:#1A1F2E;border-bottom:1px solid #DDE3F0">AAA · 15.3:1</div><div class="swatch-meta"><strong>Canvas</strong><code>--color-canvas · #F4F6FB</code></div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Tipografía y Números Tabulares</h2>
+      <p style="font-size:30px;font-weight:800;margin:0 0 6px;color:var(--fg-heading)">Certificados laborales y gestión de talento</p>
+      <p style="font-size:15px;color:var(--fg-muted);margin:0 0 12px">DM Sans (400–800) para títulos y lectura prolongada con alta claridad en pantallas de escritorio y móvil.</p>
+      <p class="mono" style="font-size:13px;margin:0">CERT-0042 &nbsp;·&nbsp; VER-A3F91C2B &nbsp;·&nbsp; CC 1020304001 &nbsp;·&nbsp; $ 4.800.000 &nbsp;·&nbsp; 2024-03-15</p>
+    </section>
+
+    <section class="section">
+      <h2>Botones, Insignias y Controles</h2>
+      <div class="row" style="margin-bottom:16px">
+        <button class="btn btn-primary" type="button">Guardar cambios</button>
+        <button class="btn btn-secondary" type="button">Cancelar</button>
+        <button class="btn btn-accent" type="button">Crear solicitud</button>
+        <button class="btn btn-success" type="button">Descargar plantilla</button>
+        <button class="btn btn-danger" type="button">Rechazar</button>
+        <button class="btn btn-primary" type="button" disabled>Deshabilitado</button>
+      </div>
+      <div class="row" style="margin-bottom:16px">
+        <span class="badge b-ok">Activo / Aprobado</span>
+        <span class="badge b-warn">Pendiente / En revisión</span>
+        <span class="badge b-err">Inactivo / Rechazado</span>
+        <span class="badge b-info">Emitido por Admin</span>
+      </div>
+      <div class="row">
+        <input class="input" type="text" placeholder="Buscar por número de documento…" aria-label="Ejemplo de campo de texto" />
+      </div>
+      <div class="alert a-ok">Certificado N.° 0042 generado y descargado correctamente.</div>
+      <div class="alert a-info">Emitiendo certificado como Administrador para Camila Andrea Rodríguez Martínez.</div>
+      <div class="alert a-warn">Aviso: el salario está en $0; los certificados completos mostrarán $0.</div>
+      <div class="alert a-err">Este empleado se encuentra Inactivo. No es posible emitir certificado laboral activo.</div>
+    </section>
+
+    <section class="section">
+      <h2>Tabla de Datos (con tabular-nums)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Consecutivo</th><th>Empleado</th><th>Código</th><th>Salario</th><th>Estado</th></tr></thead>
+          <tbody>
+            <tr><td class="mono" style="font-weight:700;color:var(--fg-heading)">CERT-0042</td><td><strong>Camila Andrea Rodríguez</strong></td><td class="mono">VER-A3F91C2B</td><td class="mono">$ 4.800.000</td><td><span class="badge b-ok">Activo</span></td></tr>
+            <tr><td class="mono" style="font-weight:700;color:var(--fg-heading)">CERT-0041</td><td><strong>Diego Armando Ríos</strong></td><td class="mono">VER-9C12EF04</td><td class="mono">$ 7.200.000</td><td><span class="badge b-warn">En revisión</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

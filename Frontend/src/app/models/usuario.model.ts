@@ -14,4 +14,5 @@ export interface Usuario {
   idEstado: number;
   rolNombre?: string;
   ultimoAcceso?: string | null;
+  debeCambiarContrasena?: boolean;
 }

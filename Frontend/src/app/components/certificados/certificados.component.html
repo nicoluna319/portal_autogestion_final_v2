@@ -1,61 +1,346 @@
 <div class="mx-auto max-w-7xl">
-  <header class="mb-6 animate-fade-up">
-    <h1 class="titulo-pagina">Certificados laborales</h1>
-    <p class="subtitulo-pagina">Genera tu certificado y recíbelo en PDF o en tu correo.</p>
-  </header>
-
-  <app-tarjeta-perfil *ngIf="empleado" [nombre]="empleado.nombre || ''" [subtitulo]="empleado.cargo" [selloValor]="antiguedad" [datos]="datosPerfil"></app-tarjeta-perfil>
-
-  <section class="card mb-6 animate-fade-up [animation-delay:100ms]" aria-labelledby="h-generar">
-    <h2 class="titulo-seccion" id="h-generar">Generar certificado</h2>
-    <p class="ayuda mb-4">Elige el tipo de certificado y cómo quieres recibirlo.</p>
-
-    <div class="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="group" aria-label="Tipo de certificado">
-      <button type="button" *ngFor="let op of opciones; let i = index"
-              class="group flex flex-col items-center rounded-2xl border-2 bg-slate-50 p-5 text-center transition duration-300 hover:-translate-y-1 hover:border-navy-700 hover:shadow-lift disabled:cursor-not-allowed disabled:opacity-60"
-              [ngClass]="opcionSeleccionada.valor === op.valor ? 'border-navy-700 bg-navy-50 shadow-lift' : 'border-ink-soft'"
-              [attr.aria-pressed]="opcionSeleccionada.valor === op.valor" [disabled]="generando" (click)="seleccionar(op)"
-              [style.animation-delay.ms]="150 + i * 80" style="animation: fade-up .5s both">
-        <span class="mb-2 text-3xl transition-transform duration-300 group-hover:scale-125" aria-hidden="true">{{ op.icono }}</span>
-        <span class="mb-1 text-sm font-bold text-navy-800">{{ op.titulo }}</span>
-        <span class="text-xs text-ink-muted">{{ op.descripcion }}</span>
-        <span class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-navy-700" *ngIf="opcionSeleccionada.valor === op.valor">
-          <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Seleccionado
-        </span>
+  <app-encabezado-pagina
+    titulo="Certificados laborales"
+    [subtitulo]="!esAdmin
+      ? 'Genera tu certificado y recíbelo en PDF o en tu correo.'
+      : (pestanaActiva === 'propios'
+        ? 'Genera tus propios certificados laborales y consulta tu historial personal.'
+        : 'Selecciona un empleado para generar el certificado que necesites o descargar su historial.')">
+    <!-- Pestañas separadas para Administrador -->
+    <div *ngIf="esAdmin" class="inline-flex flex-wrap rounded-control border border-border bg-surface p-1 shadow-xs" role="tablist" aria-label="Secciones de certificados">
+      <button type="button" role="tab" [attr.aria-selected]="pestanaActiva === 'propios'"
+              class="rounded-lg px-3.5 py-2 text-xs font-bold tabular-nums transition-colors duration-fast"
+              [ngClass]="pestanaActiva === 'propios' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+              (click)="cambiarPestana('propios')">
+        Mis certificados ({{ misCertificados.length }})
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="pestanaActiva === 'empleados'"
+              class="rounded-lg px-3.5 py-2 text-xs font-bold tabular-nums transition-colors duration-fast"
+              [ngClass]="pestanaActiva === 'empleados' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+              (click)="cambiarPestana('empleados')">
+        Certificados de empleados ({{ empleados.length }})
       </button>
     </div>
+  </app-encabezado-pagina>
 
-    <p class="mb-4 rounded-xl border border-amber/40 bg-amber-50 px-4 py-3 text-sm text-amber-800"><strong>Qué incluye: </strong>{{ opcionSeleccionada.detalle }}</p>
+  <ng-container *ngIf="!esAdmin || pestanaActiva === 'propios'">
+    <ng-container *ngIf="miEmpleado; else sinPerfilPropio">
+      <app-tarjeta-perfil [nombre]="miEmpleado.nombre || ''" [subtitulo]="miEmpleado.cargo" [selloValor]="miAntiguedad" [datos]="misDatosPerfil"></app-tarjeta-perfil>
 
-    <div *ngIf="mensaje" class="alerta" [class.alerta-error]="tipoMensaje === 'error'" [attr.role]="tipoMensaje === 'error' ? 'alert' : 'status'">{{ mensaje }}</div>
+      <section class="card mb-6 animate-fade-up [animation-delay:80ms]" aria-labelledby="h-generar-propio">
+        <h2 class="titulo-seccion" id="h-generar-propio">Generar mi certificado</h2>
+        <p class="ayuda mb-4">Elige el tipo de certificado y cómo quieres recibirlo.</p>
 
-    <h3 class="mb-3 text-sm font-bold text-navy-800">¿Cómo lo quieres recibir?</h3>
-    <div class="flex flex-col gap-3 sm:flex-row">
-      <button type="button" class="btn-primario flex-1" [disabled]="generando" (click)="descargarPdf()">{{ generando ? "Generando…" : "Descargar PDF" }}</button>
-      <button type="button" class="btn-secundario flex-1" [disabled]="generando" (click)="enviarPorCorreo()">{{ generando ? "Enviando…" : "Enviar a mi correo" }}</button>
-    </div>
-  </section>
+        <div class="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="group" aria-label="Tipo de certificado">
+          <button type="button" *ngFor="let op of opciones; let i = index"
+                  class="group animate-fade-up flex flex-col items-center rounded-card border-2 bg-surface-subtle p-5 text-center transition-[transform,border-color,background-color,box-shadow] duration-slow hover:-translate-y-1 hover:border-primary hover:shadow-lift disabled:cursor-not-allowed disabled:opacity-60"
+                  [ngClass]="opcionSeleccionada.valor === op.valor ? 'border-primary bg-surface-tint shadow-lift' : 'border-border'"
+                  [attr.aria-pressed]="opcionSeleccionada.valor === op.valor" [disabled]="generando || activoEsInactivo" (click)="seleccionar(op)"
+                  [style.animation-delay.ms]="80 + i * 60">
+            <span class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-navy-100 text-foreground-heading transition-transform duration-slow group-hover:scale-110" [ngSwitch]="op.icono" aria-hidden="true">
+              <svg *ngSwitchCase="'completa'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+              <svg *ngSwitchCase="'sin_basico'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+              <svg *ngSwitchCase="'con_extras'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6M12 2v3"/></svg>
+            </span>
+            <span class="mb-1 text-sm font-bold text-foreground-heading">{{ op.titulo }}</span>
+            <span class="text-xs text-muted-foreground">{{ op.descripcion }}</span>
+            <span class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary" *ngIf="opcionSeleccionada.valor === op.valor">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Seleccionado
+            </span>
+          </button>
+        </div>
 
-  <section class="animate-fade-up [animation-delay:200ms]" aria-labelledby="h-historial">
-    <h2 class="titulo-seccion" id="h-historial">Mis certificados generados</h2>
-    <div class="tabla-wrap" *ngIf="historial.length > 0; else sinCertificados">
-      <table class="tabla">
-        <caption class="sr-only">Certificados generados</caption>
-        <thead><tr><th scope="col">Consecutivo</th><th scope="col">Fecha</th><th scope="col">Canal</th></tr></thead>
-        <tbody>
-          <tr *ngFor="let c of historial">
-            <td class="font-bold text-navy-800">CERT-{{ c.consecutivo?.toString()?.padStart(4, "0") }}</td>
-            <td>{{ c.fecha_generacion | date:"dd/MM/yyyy hh:mm a" }}</td>
-            <td><span class="insignia-warn">{{ c.canal_entrega === "correo" ? "Correo" : "PDF" }}</span></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <ng-template #sinCertificados>
-      <div class="vacio">
-        <strong class="text-base text-navy-800">Aún no has generado certificados</strong>
-        <span>Elige un tipo arriba y descárgalo en segundos.</span>
-      </div>
+        <p class="mb-4 rounded-control border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-foreground"><strong>Qué incluye: </strong>{{ opcionSeleccionada.detalle }}</p>
+
+        <app-alerta [mensaje]="mensaje" [variante]="varianteMensaje"></app-alerta>
+
+        <h3 class="mb-3 text-sm font-bold text-foreground-heading">¿Cómo quieres recibirlo?</h3>
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button type="button" class="btn-primario flex-1" [disabled]="generando || activoEsInactivo" [attr.aria-busy]="generando" (click)="descargarPdf()">
+            <svg *ngIf="generando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span>{{ generando ? "Generando…" : "Descargar PDF" }}</span>
+          </button>
+          <button type="button" class="btn-secundario flex-1" [disabled]="generando || activoEsInactivo" [attr.aria-busy]="generando" (click)="enviarPorCorreo()">
+            <svg *ngIf="generando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span>{{ generando ? "Enviando…" : "Enviar a mi correo" }}</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Historial propio -->
+      <section class="animate-fade-up [animation-delay:140ms]" aria-labelledby="h-mis-certificados">
+        <h2 class="titulo-seccion" id="h-mis-certificados">Mis certificados generados ({{ misCertificados.length }})</h2>
+
+        <ng-container *ngIf="misCertificados.length > 0; else sinMisCertificados">
+          <!-- Tarjetas responsivas (móvil/tablet) -->
+          <div class="grid gap-3 md:hidden">
+            <article *ngFor="let c of misCertificados; trackBy: trackByCertificado" class="card !p-4">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p class="font-mono text-sm font-bold tabular-nums text-foreground-heading" translate="no">CERT-{{ c.consecutivo?.toString()?.padStart(4, "0") }}</p>
+                  <p class="text-sm font-semibold text-foreground">{{ c.tipo_certificado || nombreTipoPorId(c.id_tipo) }}</p>
+                </div>
+                <span class="insignia-warn">{{ c.canal_entrega === "correo" ? "Correo" : "PDF" }}</span>
+              </div>
+              <div class="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span class="font-mono tabular-nums" translate="no">{{ c.codigo_verificacion || "—" }}</span>
+                <span class="tabular-nums">{{ c.fecha_generacion | date:"dd/MM/yyyy hh:mm a" }}</span>
+              </div>
+              <div class="mt-3 border-t border-border/70 pt-3">
+                <button type="button" class="btn-mini w-full justify-center" (click)="descargarExistente(c)">Descargar PDF</button>
+              </div>
+            </article>
+          </div>
+
+          <!-- Tabla compacta (md+ sin scroll horizontal) -->
+          <div class="tabla-wrap hidden md:block">
+            <table class="tabla">
+              <caption class="sr-only">Mis certificados generados</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Consecutivo</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Código</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Canal</th>
+                  <th scope="col">Archivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of misCertificados; trackBy: trackByCertificado">
+                  <td class="font-mono font-bold tabular-nums text-foreground-heading" translate="no">CERT-{{ c.consecutivo?.toString()?.padStart(4, "0") }}</td>
+                  <td>{{ c.tipo_certificado || nombreTipoPorId(c.id_tipo) }}</td>
+                  <td class="font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ c.codigo_verificacion || "—" }}</td>
+                  <td class="text-xs tabular-nums">{{ c.fecha_generacion | date:"dd/MM/yyyy hh:mm a" }}</td>
+                  <td><span class="insignia-warn">{{ c.canal_entrega === "correo" ? "Correo" : "PDF" }}</span></td>
+                  <td>
+                    <button type="button" class="btn-mini" (click)="descargarExistente(c)" [attr.aria-label]="'Descargar CERT-' + c.consecutivo">
+                      Descargar PDF
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
+        <ng-template #sinMisCertificados>
+          <app-estado-vacio titulo="Aún no has generado certificados propios" descripcion="Elige un tipo arriba y descárgalo o envíalo a tu correo."></app-estado-vacio>
+        </ng-template>
+      </section>
+    </ng-container>
+
+    <ng-template #sinPerfilPropio>
+      <app-alerta *ngIf="mensaje" [mensaje]="mensaje" variante="error"></app-alerta>
+      <app-estado-vacio
+        titulo="No tienes perfil laboral propio asociado"
+        [descripcion]="esAdmin
+          ? 'Tu cuenta de administrador aún no tiene datos laborales registrados. Puedes emitir certificados para cualquier empleado desde la pestaña «Certificados de empleados».'
+          : 'Contacta al administrador para asociar tu perfil de empleado.'">
+        <button *ngIf="esAdmin" type="button" class="btn-primario mt-2" (click)="cambiarPestana('empleados')">
+          Ir a certificados de empleados
+        </button>
+      </app-estado-vacio>
     </ng-template>
-  </section>
+  </ng-container>
+
+  <ng-container *ngIf="esAdmin && pestanaActiva === 'empleados'">
+    <ng-container *ngIf="!empleadoSeleccionado">
+      <section class="card mb-6 animate-fade-up" aria-label="Buscar empleado">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div class="flex flex-1 flex-wrap items-end gap-3">
+            <div class="min-w-0 flex-1 sm:max-w-md">
+              <label class="label" for="filtroEmpleadoCert">Buscar empleado</label>
+              <input id="filtroEmpleadoCert" class="input" type="search" autocomplete="off" spellcheck="false"
+                     [(ngModel)]="filtroEmpleado" (ngModelChange)="aplicarFiltroEmpleados()" name="filtroEmpleadoCert"
+                     placeholder="Nombre, documento, cargo, área o correo…" />
+            </div>
+            <div>
+              <label class="label" for="filtroEstadoCert">Estado</label>
+              <select id="filtroEstadoCert" class="input !w-auto" [(ngModel)]="filtroEstadoEmpleado" (ngModelChange)="aplicarFiltroEmpleados()" name="filtroEstadoCert">
+                <option value="todos">Todos</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </div>
+          </div>
+          <span class="text-xs font-bold tabular-nums text-muted-foreground">
+            Mostrando {{ empleadosFiltrados.length }} de {{ empleados.length }} empleados
+          </span>
+        </div>
+      </section>
+
+      <p *ngIf="cargandoEmpleados" role="status" class="vacio">Cargando empleados…</p>
+
+      <div *ngIf="!cargandoEmpleados && empleadosFiltrados.length > 0" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 animate-fade-up [animation-delay:80ms]">
+        <button type="button"
+                *ngFor="let emp of empleadosFiltrados; trackBy: trackByEmpleado"
+                (click)="abrirEmpleado(emp)"
+                class="card card-hover group flex w-full flex-col justify-between gap-3 text-left transition-colors hover:border-primary">
+          <div class="flex w-full items-start gap-3">
+            <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-navy-100 text-sm font-extrabold text-navy-900 transition-colors group-hover:bg-navy-800 group-hover:text-white" aria-hidden="true">
+              {{ inicialesEmpleado(emp.nombre) }}
+            </span>
+            <div class="min-w-0 flex-1">
+              <div class="flex flex-wrap items-center justify-between gap-1.5">
+                <h3 class="break-words text-sm font-bold text-foreground-heading group-hover:text-primary">{{ emp.nombre }}</h3>
+                <span [ngClass]="emp.id_estado === 2 ? 'insignia-err' : 'insignia-ok'">{{ emp.id_estado === 2 ? "Inactivo" : "Activo" }}</span>
+              </div>
+              <p class="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground" translate="no">
+                {{ emp.tipo_documento || "CC" }} {{ emp.numero_documento || emp.cedula }}
+              </p>
+              <p class="mt-1 text-xs font-medium text-foreground">{{ emp.cargo }} · <span class="text-muted-foreground">{{ emp.area }}</span></p>
+            </div>
+          </div>
+
+          <div class="flex w-full items-center justify-between border-t border-border/70 pt-3 text-xs">
+            <span class="font-semibold tabular-nums text-muted-foreground">
+              {{ conteoCertificados(emp.id_empleado) }} {{ conteoCertificados(emp.id_empleado) === 1 ? "certificado emitido" : "certificados emitidos" }}
+            </span>
+            <span class="inline-flex items-center gap-1 font-bold text-primary">
+              Generar / ver
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </span>
+          </div>
+        </button>
+      </div>
+
+      <app-estado-vacio *ngIf="!cargandoEmpleados && empleadosFiltrados.length === 0"
+        titulo="No se encontraron empleados"
+        descripcion="Prueba ajustando la búsqueda o el filtro de estado.">
+      </app-estado-vacio>
+    </ng-container>
+
+    <!-- Vista B: Detalle del empleado clickeado (generar su certificado + ver solo sus certificados) -->
+    <ng-container *ngIf="empleadoSeleccionado">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <button type="button" class="btn-secundario !min-h-[40px] text-xs" (click)="volverADirectorio()">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
+          Volver al listado de empleados
+        </button>
+        <span class="text-xs font-bold text-muted-foreground">
+          Certificados de {{ empleadoSeleccionado.nombre }}
+        </span>
+      </div>
+
+      <app-tarjeta-perfil
+        [nombre]="empleadoSeleccionado.nombre || ''"
+        [subtitulo]="empleadoSeleccionado.cargo"
+        [selloValor]="antiguedadSeleccionado"
+        [datos]="datosPerfilSeleccionado">
+      </app-tarjeta-perfil>
+
+      <section class="card mb-6 animate-fade-up" aria-labelledby="h-generar-emp">
+        <h2 class="titulo-seccion" id="h-generar-emp">Generar certificado para {{ empleadoSeleccionado.nombre }}</h2>
+
+        <app-alerta *ngIf="empleadoSeleccionadoInactivo" variante="error"
+          mensaje="Este empleado se encuentra Inactivo. No es posible emitir un certificado de vinculación laboral activa.">
+        </app-alerta>
+
+        <p class="ayuda mb-4">Elige el tipo de certificado y cómo deseas entregarlo.</p>
+
+        <div class="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" role="group" aria-label="Tipo de certificado">
+          <button type="button" *ngFor="let op of opciones"
+                  class="group flex flex-col items-center rounded-card border-2 bg-surface-subtle p-5 text-center transition-[transform,border-color,background-color,box-shadow] duration-slow hover:-translate-y-1 hover:border-primary hover:shadow-lift disabled:cursor-not-allowed disabled:opacity-60"
+                  [ngClass]="opcionSeleccionada.valor === op.valor ? 'border-primary bg-surface-tint shadow-lift' : 'border-border'"
+                  [attr.aria-pressed]="opcionSeleccionada.valor === op.valor" [disabled]="generando || empleadoSeleccionadoInactivo" (click)="seleccionar(op)">
+            <span class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-navy-100 text-foreground-heading transition-transform duration-slow group-hover:scale-110" [ngSwitch]="op.icono" aria-hidden="true">
+              <svg *ngSwitchCase="'completa'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+              <svg *ngSwitchCase="'sin_basico'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
+              <svg *ngSwitchCase="'con_extras'" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6M12 2v3"/></svg>
+            </span>
+            <span class="mb-1 text-sm font-bold text-foreground-heading">{{ op.titulo }}</span>
+            <span class="text-xs text-muted-foreground">{{ op.descripcion }}</span>
+            <span class="mt-3 inline-flex items-center gap-1 text-xs font-bold text-primary" *ngIf="opcionSeleccionada.valor === op.valor">
+              <svg aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg>Seleccionado
+            </span>
+          </button>
+        </div>
+
+        <p class="mb-4 rounded-control border border-warning-border bg-warning-bg px-4 py-3 text-sm text-warning-foreground"><strong>Qué incluye: </strong>{{ opcionSeleccionada.detalle }}</p>
+
+        <app-alerta [mensaje]="mensaje" [variante]="varianteMensaje"></app-alerta>
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button type="button" class="btn-primario flex-1" [disabled]="generando || empleadoSeleccionadoInactivo" [attr.aria-busy]="generando" (click)="descargarPdf()">
+            <svg *ngIf="generando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span>{{ generando ? "Generando…" : "Descargar PDF del empleado" }}</span>
+          </button>
+          <button type="button" class="btn-secundario min-w-0 flex-1" [disabled]="generando || empleadoSeleccionadoInactivo" [attr.aria-busy]="generando" (click)="enviarPorCorreo()">
+            <svg *ngIf="generando" aria-hidden="true" class="h-4 w-4 shrink-0 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span class="truncate">{{ generando ? "Enviando…" : "Enviar al correo (" + (empleadoSeleccionado.correo || "") + ")" }}</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Historial exclusivo de este empleado -->
+      <section class="animate-fade-up [animation-delay:120ms]" aria-labelledby="h-hist-emp">
+        <h2 class="titulo-seccion" id="h-hist-emp">
+          Certificados emitidos a {{ empleadoSeleccionado.nombre }} ({{ certificadosSeleccionado.length }})
+        </h2>
+
+        <ng-container *ngIf="certificadosSeleccionado.length > 0; else sinCertsEmp">
+          <div class="grid gap-3 md:hidden">
+            <article *ngFor="let c of certificadosSeleccionado; trackBy: trackByCertificado" class="card !p-4">
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p class="font-mono text-sm font-bold tabular-nums text-foreground-heading" translate="no">CERT-{{ c.consecutivo?.toString()?.padStart(4, "0") }}</p>
+                  <p class="text-sm font-semibold text-foreground">{{ c.tipo_certificado || nombreTipoPorId(c.id_tipo) }}</p>
+                </div>
+                <span class="insignia-warn">{{ c.canal_entrega === "correo" ? "Correo" : "PDF" }}</span>
+              </div>
+              <div class="mt-2 space-y-1 text-xs text-muted-foreground">
+                <p>Emitido por: <strong class="text-foreground">{{ c.generado_por_nombre || "—" }}</strong></p>
+                <p class="font-mono tabular-nums" translate="no">Código: {{ c.codigo_verificacion || "—" }}</p>
+                <p class="tabular-nums">{{ c.fecha_generacion | date:"dd/MM/yyyy hh:mm a" }}</p>
+              </div>
+              <div class="mt-3 border-t border-border/70 pt-3">
+                <button type="button" class="btn-mini w-full justify-center" (click)="descargarExistente(c)">Descargar PDF</button>
+              </div>
+            </article>
+          </div>
+
+          <div class="tabla-wrap hidden md:block">
+            <table class="tabla">
+              <caption class="sr-only">Certificados emitidos al empleado seleccionado</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Consecutivo</th>
+                  <th scope="col">Tipo</th>
+                  <th scope="col">Emitido por</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Canal</th>
+                  <th scope="col">Archivo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of certificadosSeleccionado; trackBy: trackByCertificado">
+                  <td>
+                    <span class="block font-mono font-bold tabular-nums text-foreground-heading" translate="no">CERT-{{ c.consecutivo?.toString()?.padStart(4, "0") }}</span>
+                    <small class="font-mono text-[11px] tabular-nums text-muted-foreground" translate="no">{{ c.codigo_verificacion || "—" }}</small>
+                  </td>
+                  <td>{{ c.tipo_certificado || nombreTipoPorId(c.id_tipo) }}</td>
+                  <td class="text-xs text-muted-foreground">{{ c.generado_por_nombre || "—" }}</td>
+                  <td class="text-xs tabular-nums">{{ c.fecha_generacion | date:"dd/MM/yyyy hh:mm a" }}</td>
+                  <td><span class="insignia-warn">{{ c.canal_entrega === "correo" ? "Correo" : "PDF" }}</span></td>
+                  <td>
+                    <button type="button" class="btn-mini" (click)="descargarExistente(c)" [attr.aria-label]="'Descargar CERT-' + c.consecutivo">
+                      Descargar PDF
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+
+        <ng-template #sinCertsEmp>
+          <app-estado-vacio
+            titulo="Este empleado aún no tiene certificados emitidos"
+            descripcion="Genera el primero seleccionando el tipo de certificado arriba.">
+          </app-estado-vacio>
+        </ng-template>
+      </section>
+    </ng-container>
+  </ng-container>
 </div>

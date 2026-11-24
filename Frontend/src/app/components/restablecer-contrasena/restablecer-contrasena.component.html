@@ -1,0 +1,84 @@
+<div class="flex min-h-screen flex-col items-center justify-center bg-canvas px-4 py-10 sm:px-6">
+  <div class="w-full max-w-md animate-fade-up">
+    <div class="mb-6 text-center">
+      <a routerLink="/login" class="mx-auto mb-4 block w-full max-w-[260px] overflow-hidden rounded-card border border-border bg-surface shadow-card">
+        <img src="assets/imagenes/portal-autogestion.jpg" alt="Portal de Autogestión" width="1004" height="331" class="block h-auto w-full" />
+      </a>
+      <h1 class="text-2xl font-extrabold tracking-tight text-foreground-heading sm:text-3xl">Restablecer contraseña</h1>
+      <p *ngIf="correoEnmascarado && !completado" class="mt-1.5 text-sm text-muted-foreground">
+        Cuenta: <strong class="text-foreground">{{ correoEnmascarado }}</strong>
+      </p>
+    </div>
+
+    <div class="card">
+      <p *ngIf="verificando" role="status" class="vacio !py-8">Validando enlace de recuperación…</p>
+
+      <div *ngIf="!verificando && mensaje"
+           class="alerta"
+           [class.alerta-error]="esError"
+           [attr.role]="esError ? 'alert' : 'status'"
+           [attr.aria-live]="esError ? 'assertive' : 'polite'"
+           aria-atomic="true">
+        <span>{{ mensaje }}</span>
+      </div>
+
+      <form *ngIf="!verificando && tokenValido && !completado" (ngSubmit)="restablecer()" class="space-y-4" novalidate>
+        <div>
+          <label class="label" for="nuevaClave">Nueva contraseña</label>
+          <input id="nuevaClave"
+                 class="input"
+                 [type]="verClaves ? 'text' : 'password'"
+                 spellcheck="false"
+                 autocomplete="new-password"
+                 [(ngModel)]="nueva"
+                 name="nuevaClave"
+                 placeholder="Mínimo 6 caracteres…"
+                 required />
+        </div>
+        <div>
+          <label class="label" for="confirmarClave">Confirmar nueva contraseña</label>
+          <input id="confirmarClave"
+                 class="input"
+                 [type]="verClaves ? 'text' : 'password'"
+                 spellcheck="false"
+                 autocomplete="new-password"
+                 [(ngModel)]="confirmar"
+                 name="confirmarClave"
+                 placeholder="Repite tu nueva contraseña…"
+                 required />
+        </div>
+
+        <label class="flex min-h-[44px] cursor-pointer items-center gap-2.5 text-sm font-medium text-foreground">
+          <input type="checkbox" [(ngModel)]="verClaves" name="verClaves" />
+          <span>Mostrar contraseñas</span>
+        </label>
+
+        <button type="submit" class="btn-primario w-full !min-h-[48px]" [disabled]="guardando || !nueva || !confirmar" [attr.aria-busy]="guardando">
+          <svg *ngIf="guardando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/>
+            <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+          </svg>
+          <span>{{ guardando ? "Guardando…" : "Guardar nueva contraseña" }}</span>
+        </button>
+      </form>
+
+      <div *ngIf="!verificando && !tokenValido" class="space-y-3 text-center">
+        <a routerLink="/olvide-contrasena" class="btn-primario w-full">Solicitar un nuevo enlace</a>
+      </div>
+
+      <div *ngIf="!verificando && completado" class="space-y-3 text-center">
+        <a routerLink="/login" class="btn-primario w-full">Ir a iniciar sesión</a>
+      </div>
+
+      <div *ngIf="!completado" class="mt-5 border-t border-border pt-4 text-center">
+        <a routerLink="/login" class="inline-flex items-center gap-1.5 text-sm font-bold text-primary hover:underline">
+          Volver a iniciar sesión
+        </a>
+      </div>
+    </div>
+
+    <p class="mt-6 text-center text-xs text-muted-foreground">
+      <span translate="no">Portal de Autogestión</span> © {{ anio }}
+    </p>
+  </div>
+</div>

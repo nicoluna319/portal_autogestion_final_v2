@@ -2,9 +2,12 @@
 export interface Solicitud {
   id_solicitud?: number;
   id_empleado?: number;
+  id_usuario_empleado?: number;
   id_estado?: number;
   tipo_solicitud?: string;
   descripcion?: string;
+  fecha_inicio?: string | null;
+  fecha_fin?: string | null;
   fecha_creacion?: string;
   nombre_empleado?: string;
   cedula_empleado?: string;
@@ -16,4 +19,6 @@ export interface NuevaSolicitud {
   idEmpleado: number;
   tipoSolicitud: string;
   descripcion: string;
+  fechaInicio?: string;
+  fechaFin?: string;
 }

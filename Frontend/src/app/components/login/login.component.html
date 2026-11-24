@@ -1,16 +1,19 @@
 <div class="grid min-h-screen lg:grid-cols-[1.25fr_1fr]">
   <!-- Carrusel -->
   <section class="on-dark relative order-2 min-h-[320px] overflow-hidden bg-navy-900 lg:order-1" aria-roledescription="carrusel" aria-label="Novedades del portal"
-           (mouseenter)="pausado = true" (mouseleave)="pausado = false" (focusin)="pausado = true" (focusout)="pausado = false">
+           (mouseenter)="pausado = true" (mouseleave)="pausado = pausadoManual" (focusin)="pausado = true" (focusout)="pausado = pausadoManual">
     <div class="absolute inset-0 animate-gradient bg-[length:300%_300%] bg-gradient-to-br from-navy-950 via-navy-700 to-navy-900"></div>
 
     <div *ngFor="let img of imagenes; let i = index" class="absolute inset-0 transition-opacity duration-1000"
          [ngClass]="i === indiceActual ? 'opacity-100' : 'pointer-events-none opacity-0'"
          role="group" aria-roledescription="diapositiva" [attr.aria-label]="(i + 1) + ' de ' + imagenes.length" [attr.aria-hidden]="i !== indiceActual">
-      <img [src]="img.src" alt="" class="h-full w-full object-cover opacity-40 mix-blend-luminosity" [ngClass]="i === indiceActual ? 'scale-100' : 'scale-110'" style="transition: transform 6s ease-out" />
+      <img [src]="img.src" alt="" [attr.width]="img.width" [attr.height]="img.height"
+           [attr.loading]="i === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : 'auto'"
+           class="h-full w-full object-cover opacity-40 mix-blend-luminosity transition-transform duration-[6000ms] ease-out"
+           [ngClass]="i === indiceActual ? 'scale-100' : 'scale-110'" />
       <div class="absolute inset-0 bg-gradient-to-t from-navy-950 via-navy-900/50 to-transparent"></div>
       <div class="absolute inset-x-0 bottom-0 p-6 pb-16 sm:p-10 sm:pb-20" *ngIf="i === indiceActual">
-        <span class="inline-block animate-fade-up rounded-full bg-amber px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-navy-900">{{ img.etiqueta }}</span>
+        <span class="inline-block animate-fade-up rounded-full bg-accent px-3 py-1 text-xs font-extrabold uppercase tracking-wider text-accent-foreground">{{ img.etiqueta }}</span>
         <h2 class="mt-4 max-w-xl animate-fade-up text-3xl font-extrabold leading-tight text-white [animation-delay:120ms] sm:text-5xl">{{ img.titulo }}</h2>
         <p class="mt-3 max-w-lg animate-fade-up text-base text-white/90 [animation-delay:240ms] sm:text-lg">{{ img.descripcion }}</p>
       </div>
@@ -19,12 +22,21 @@
     <div class="pointer-events-none absolute -left-10 top-10 h-40 w-40 animate-float rounded-full bg-amber/20 blur-2xl"></div>
     <div class="pointer-events-none absolute right-10 top-1/3 h-56 w-56 animate-float-slow rounded-full bg-navy-600/30 blur-3xl"></div>
 
+    <button type="button" (click)="alternarPausa()"
+            [attr.aria-pressed]="pausadoManual"
+            [attr.aria-label]="pausadoManual ? 'Reanudar presentación de diapositivas' : 'Pausar presentación de diapositivas'"
+            class="absolute right-4 top-4 inline-flex min-h-[44px] items-center gap-1.5 rounded-full border border-white/30 bg-navy-900/70 px-3.5 text-xs font-bold text-white backdrop-blur transition-colors duration-fast hover:bg-navy-900">
+      <svg *ngIf="!pausadoManual" aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+      <svg *ngIf="pausadoManual" aria-hidden="true" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+      <span>{{ pausadoManual ? "Reanudar" : "Pausar" }}</span>
+    </button>
+
     <button type="button" (click)="anterior()" aria-label="Diapositiva anterior"
-            class="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-900/60 text-white backdrop-blur transition hover:scale-110 hover:bg-navy-900">
+            class="absolute left-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-900/60 text-white backdrop-blur transition-[transform,background-color] duration-normal hover:scale-110 hover:bg-navy-900">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <button type="button" (click)="siguiente()" aria-label="Diapositiva siguiente"
-            class="absolute right-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-900/60 text-white backdrop-blur transition hover:scale-110 hover:bg-navy-900">
+            class="absolute right-4 top-1/2 grid h-12 w-12 -translate-y-1/2 place-items-center rounded-full border border-white/30 bg-navy-900/60 text-white backdrop-blur transition-[transform,background-color] duration-normal hover:scale-110 hover:bg-navy-900">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
     </button>
 
@@ -32,7 +44,7 @@
       <button type="button" *ngFor="let img of imagenes; let i = index" (click)="irA(i)"
               [attr.aria-label]="'Ir a la diapositiva ' + (i + 1)" [attr.aria-current]="i === indiceActual ? 'true' : null"
               class="grid h-11 min-w-[28px] place-items-center px-1.5">
-        <span class="block h-2 rounded-full transition-all duration-500" [ngClass]="i === indiceActual ? 'w-8 bg-amber' : 'w-2 bg-white/50'"></span>
+        <span class="block h-2 rounded-full transition-[width,background-color] duration-500" [ngClass]="i === indiceActual ? 'w-8 bg-accent' : 'w-2 bg-white/50'"></span>
       </button>
     </div>
   </section>
@@ -41,33 +53,49 @@
   <aside class="order-1 flex flex-col justify-center px-5 py-10 sm:px-12 lg:order-2">
     <div class="mx-auto w-full max-w-md animate-fade-up">
       <div class="mb-8 text-center">
-        <div class="mx-auto mb-4 w-full max-w-[280px] overflow-hidden rounded-2xl border border-ink-soft bg-white shadow-card">
-          <img src="assets/imagenes/portal-autogestion.jpg" alt="Portal de Autogestión" class="block h-auto w-full" />
+        <div class="mx-auto mb-4 w-full max-w-[280px] overflow-hidden rounded-card border border-border bg-surface shadow-card">
+          <img src="assets/imagenes/portal-autogestion.jpg" alt="Portal de Autogestión" width="1004" height="331" fetchpriority="high" class="block h-auto w-full" />
         </div>
-        <h1 class="text-3xl font-extrabold tracking-tight text-navy-800">Bienvenido de nuevo</h1>
-        <p class="mt-1 text-ink-muted">Ingresa con tu correo para gestionar tus solicitudes y certificados.</p>
+        <h1 class="text-3xl font-extrabold tracking-tight text-foreground-heading">Bienvenido de nuevo</h1>
+        <p class="mt-1 text-muted-foreground">Ingresa con tu correo para gestionar tus solicitudes y certificados.</p>
       </div>
 
       <form class="card flex flex-col gap-5" (ngSubmit)="ingresar()" novalidate aria-labelledby="titulo-login">
         <h2 class="sr-only" id="titulo-login">Iniciar sesión</h2>
         <div>
           <label class="label" for="correo">Correo electrónico</label>
-          <input id="correo" class="input" type="email" [(ngModel)]="correo" name="correo" placeholder="nombre@empresa.com" autocomplete="username" required
+          <input id="correo" class="input" type="email" inputmode="email" spellcheck="false" [(ngModel)]="correo" name="correo" placeholder="ej. nombre@empresa.com…" autocomplete="username" required
                  [attr.aria-invalid]="error ? true : null" [attr.aria-describedby]="error ? 'error-login' : null" />
         </div>
         <div>
-          <label class="label" for="contrasena">Contraseña</label>
-          <input id="contrasena" class="input" type="password" [(ngModel)]="contrasena" name="contrasena" placeholder="Tu contraseña" autocomplete="current-password" required
-                 [attr.aria-invalid]="error ? true : null" [attr.aria-describedby]="error ? 'error-login' : null" />
+          <div class="mb-1.5 flex items-center justify-between gap-2">
+            <label class="label !mb-0" for="contrasena">Contraseña</label>
+            <a routerLink="/olvide-contrasena" class="text-xs font-bold text-primary transition-colors hover:text-primary-hover hover:underline">
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
+          <div class="relative">
+            <input id="contrasena" class="input pr-12" [type]="verClave ? 'text' : 'password'" spellcheck="false" [(ngModel)]="contrasena" name="contrasena" placeholder="Ingresa tu contraseña…" autocomplete="current-password" required
+                   [attr.aria-invalid]="error ? true : null" [attr.aria-describedby]="error ? 'error-login' : null" />
+            <button type="button" (click)="verClave = !verClave"
+                    [attr.aria-pressed]="verClave"
+                    [attr.aria-label]="verClave ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                    class="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground transition-colors duration-fast hover:bg-surface-subtle hover:text-foreground">
+              <svg *ngIf="!verClave" aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg *ngIf="verClave" aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
         </div>
-        <div class="alerta alerta-error !mb-0" id="error-login" role="alert" *ngIf="error">{{ error }}</div>
+        <div class="alerta alerta-error !mb-0" id="error-login" role="alert" aria-live="assertive" aria-atomic="true" *ngIf="error">{{ error }}</div>
         <button type="submit" class="btn-primario w-full !min-h-[50px] text-base" [disabled]="cargando" [attr.aria-busy]="cargando">
-          {{ cargando ? "Ingresando…" : "Ingresar" }}
+          <svg *ngIf="cargando" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+          <span>{{ cargando ? "Ingresando…" : "Ingresar" }}</span>
         </button>
       </form>
 
-      <p class="mt-6 text-center text-xs text-ink-muted">
-        <span class="sr-only">Contacto: </span>(+57) 301 2952356 · Calle 15 #5-23, Bogotá<br />Portal de Autogestión © 2026
+      <p class="mt-6 text-center text-xs text-muted-foreground">
+        <span class="sr-only">Contacto: </span>(+57)&nbsp;301&nbsp;2952356 · Calle 15 #5-23, Bogotá<br />
+        <span translate="no">Portal de Autogestión</span> © {{ anio }}
       </p>
     </div>
   </aside>

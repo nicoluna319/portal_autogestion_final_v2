@@ -1,28 +1,27 @@
 <div class="mx-auto max-w-7xl">
-  <header class="mb-6 animate-fade-up">
-    <h1 class="titulo-pagina">Gestión de empleados</h1>
-    <p class="subtitulo-pagina">Registra los datos laborales de cada persona o cárgalos en masa desde Excel.</p>
-  </header>
+  <app-encabezado-pagina
+    titulo="Gestión de empleados"
+    subtitulo="Registra los datos laborales de cada persona o cárgalos en masa desde Excel o CSV.">
+  </app-encabezado-pagina>
 
-  <div *ngIf="mensaje" class="alerta" [class.alerta-error]="tipoMensaje === 'error'" [attr.role]="tipoMensaje === 'error' ? 'alert' : 'status'">
-    <span>{{ mensaje }}</span>
-    <a *ngIf="faltaUsuario" routerLink="/usuarios" class="font-bold underline">Ir a Usuarios</a>
-  </div>
+  <app-alerta [mensaje]="mensaje" [variante]="varianteMensaje">
+    <a *ngIf="faltaUsuario" routerLink="/configuracion" class="font-bold underline">Ir a Configuración · Usuarios</a>
+  </app-alerta>
 
   <section class="card mb-6 animate-fade-up [animation-delay:60ms]" aria-label="Buscar empleado">
-    <label class="label" for="busqueda">Buscar por número de documento</label>
-    <div class="flex flex-wrap gap-2">
-      <input id="busqueda" class="input max-w-sm flex-1" type="text" [(ngModel)]="busqueda" name="busqueda" placeholder="Ej. 1234567890" (keyup.enter)="buscarParaEditar()" />
-      <button type="button" class="btn-primario" (click)="buscarParaEditar()">Buscar</button>
+    <label class="label" for="busqueda">Buscar empleado para editar (documento, nombre, cargo o área)</label>
+    <div class="flex flex-col gap-2 sm:flex-row">
+      <input id="busqueda" class="input flex-1 sm:max-w-md" type="text" autocomplete="off" spellcheck="false" [(ngModel)]="busqueda" name="busqueda" placeholder="Ej. 1234567890, Ana Pérez o Tecnología…" (keyup.enter)="buscarParaEditar()" />
+      <button type="button" class="btn-primario sm:w-auto" (click)="buscarParaEditar()">Buscar</button>
     </div>
   </section>
 
   <form *ngIf="paso === 'busqueda'" (ngSubmit)="buscarPersona()" class="card mb-6 animate-scale-in">
     <h2 class="titulo-seccion">Nuevo empleado · Identificación</h2>
-    <p class="ayuda mb-4">La persona debe tener un usuario creado. Escribe su número de documento para continuar.</p>
+    <p class="ayuda mb-4">La persona debe tener un usuario creado en Configuración. Escribe su número de documento para continuar.</p>
     <div class="max-w-sm">
       <label class="label" for="docNuevo">Número de identificación *</label>
-      <input id="docNuevo" class="input" type="text" [(ngModel)]="documentoNuevo" name="docNuevo" required />
+      <input id="docNuevo" class="input" type="text" autocomplete="off" spellcheck="false" [(ngModel)]="documentoNuevo" name="docNuevo" placeholder="Ej. 1020304001 o CO9845123…" required />
     </div>
     <div class="mt-6 flex justify-end"><button type="submit" class="btn-primario">Continuar</button></div>
   </form>
@@ -30,17 +29,21 @@
   <form *ngIf="paso === 'formulario' && persona" (ngSubmit)="guardar()" class="card mb-6 animate-scale-in">
     <h2 class="titulo-seccion">{{ modoEdicion ? "Editar empleado" : "Nuevo empleado · Datos laborales" }}</h2>
     <dl class="mb-3 grid gap-3 rounded-xl border border-navy-100 bg-navy-50 p-4 sm:grid-cols-2">
-      <div><dt class="text-xs font-bold uppercase tracking-wider text-ink-muted">Nombre</dt><dd class="font-semibold">{{ persona.nombre }}</dd></div>
+      <div><dt class="text-xs font-bold uppercase tracking-wider text-ink-muted">Nombre</dt><dd class="break-words font-semibold">{{ persona.nombre }}</dd></div>
       <div><dt class="text-xs font-bold uppercase tracking-wider text-ink-muted">Documento</dt><dd class="font-semibold">{{ nombreTipo(persona.tipoDocumento) }} {{ persona.numeroDocumento }}</dd></div>
       <div><dt class="text-xs font-bold uppercase tracking-wider text-ink-muted">Género</dt><dd class="font-semibold">{{ persona.genero || "—" }}</dd></div>
       <div><dt class="text-xs font-bold uppercase tracking-wider text-ink-muted">Correo</dt><dd class="break-all font-semibold">{{ persona.correo }}</dd></div>
     </dl>
-    <p class="ayuda mb-4">Los datos personales se modifican en Usuarios.</p>
+    <p class="ayuda mb-4">Los datos personales se modifican en Configuración &gt; Usuarios.</p>
     <div class="grid gap-4 sm:grid-cols-2">
       <div><label class="label" for="cargo">Cargo *</label><input id="cargo" class="input" type="text" [(ngModel)]="form.cargo" name="cargo" required /></div>
       <div><label class="label" for="area">Área *</label><input id="area" class="input" type="text" [(ngModel)]="form.area" name="area" required /></div>
       <div><label class="label" for="ingreso">Fecha de ingreso *</label><input id="ingreso" class="input" type="date" [(ngModel)]="form.fechaIngreso" name="ingreso" required /></div>
-      <div><label class="label" for="salario">Salario básico mensual</label><input id="salario" class="input" type="number" min="0" [(ngModel)]="form.salario" name="salario" /></div>
+      <div>
+        <label class="label" for="salario">Salario básico mensual</label>
+        <input id="salario" class="input" type="number" min="0" [(ngModel)]="form.salario" name="salario" />
+        <p *ngIf="form.salario === 0" class="mt-1 text-xs font-medium text-amber-800">Aviso: el salario está en $0; las certificaciones laborales completas mostrarán $0.</p>
+      </div>
       <div><label class="label" for="extras">Promedio de horas extras</label><input id="extras" class="input" type="number" min="0" [(ngModel)]="form.promedioHorasExtras" name="extras" /></div>
     </div>
     <div class="mt-6 flex flex-col-reverse justify-end gap-2 sm:flex-row">
@@ -49,50 +52,221 @@
     </div>
   </form>
 
+  <!-- Carga masiva Excel / CSV -->
   <section class="card mb-6 border-navy-100 bg-navy-50/70 animate-fade-up [animation-delay:120ms]" aria-labelledby="h-carga">
-    <h2 class="titulo-seccion" id="h-carga">Carga masiva desde Excel</h2>
-    <p class="ayuda mb-4">
-      Descarga la plantilla, llénala con una fila por empleado y súbela. Se crean el usuario de acceso y el empleado de cada fila.
-      Columnas: <code class="rounded bg-navy-100 px-1.5 py-0.5 text-xs break-words">tipoDocumento, numeroDocumento, primerNombre, segundoNombre, primerApellido, segundoApellido, genero, correo, contrasena, cargo, area, fechaIngreso, salario, promedioHorasExtras</code>
-    </p>
-    <div class="flex flex-wrap items-center gap-3">
-      <button type="button" class="btn-exito" (click)="descargarPlantilla()">Descargar plantilla</button>
-      <label for="archivo" class="sr-only">Archivo de Excel (.xlsx)</label>
-      <input id="archivo" class="input max-w-xs flex-1 !py-2 file:mr-3 file:rounded-lg file:border-0 file:bg-navy-100 file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-navy-800" type="file" accept=".xlsx" (change)="seleccionarArchivo($event)" />
-      <button type="button" class="btn-primario" (click)="cargarExcel()" [disabled]="cargandoExcel || !archivoSeleccionado">
-        {{ cargandoExcel ? "Procesando…" : "Cargar Excel" }}
-      </button>
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+      <h2 class="titulo-seccion !mb-0" id="h-carga">Carga masiva desde Excel o CSV</h2>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" class="btn-exito !min-h-[38px] !px-3.5 !py-1.5 text-xs" (click)="descargarPlantilla('xlsx')">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Plantilla Excel (.xlsx)
+        </button>
+        <button type="button" class="btn-secundario !min-h-[38px] !px-3.5 !py-1.5 text-xs" (click)="descargarPlantilla('csv')">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Plantilla CSV (.csv)
+        </button>
+      </div>
     </div>
-    <div class="mt-4 rounded-xl bg-white p-4 shadow-card animate-scale-in" *ngIf="resultadoCarga" role="status">
-      <p class="font-bold text-navy-800">{{ resultadoCarga.mensaje }}</p>
-      <ul *ngIf="resultadoCarga.errores.length > 0" class="mt-2 list-disc space-y-1 pl-5 text-sm text-err-dark">
-        <li *ngFor="let err of resultadoCarga.errores">{{ err }}</li>
-      </ul>
+
+    <p class="ayuda mb-4">
+      Descarga la plantilla en Excel o CSV, llénala con una fila por empleado (soporta cientos o miles de registros; CSV acepta coma o punto y coma) y súbela. Por cada fila válida se crea automáticamente el <strong>usuario de acceso</strong> y el <strong>empleado</strong>.
+      <br />
+      <span class="mt-1 inline-block max-w-full">Columnas: <code translate="no" class="rounded bg-navy-100 px-1.5 py-0.5 font-mono text-xs break-all sm:break-words">tipoDocumento, numeroDocumento, primerNombre, segundoNombre, primerApellido, segundoApellido, genero, correo, contrasena, cargo, area, fechaIngreso, salario, promedioHorasExtras</code></span>
+    </p>
+
+    <div class="rounded-card border-2 border-dashed p-5 transition-[border-color,background-color] duration-normal"
+         [ngClass]="arrastrandoArchivo ? 'border-primary bg-navy-100/70 select-none' : 'border-border-brand bg-surface/90'"
+         (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" (drop)="onDrop($event)">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex min-w-0 items-center gap-3">
+          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-navy-100 text-foreground-heading" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+          </span>
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-foreground-heading" *ngIf="!archivoSeleccionado">Arrastra aquí tu archivo Excel o CSV, o selecciónalo desde tu equipo</p>
+            <p class="text-xs text-muted-foreground" *ngIf="!archivoSeleccionado">Formatos permitidos: .xlsx, .xls y .csv (máximo 10&nbsp;MB)</p>
+            <div *ngIf="archivoSeleccionado" class="flex flex-wrap items-center gap-2">
+              <span translate="no" class="rounded-md bg-navy-800 px-2 py-0.5 font-mono text-[11px] font-bold text-white">{{ extensionArchivo }}</span>
+              <span class="break-all text-sm font-bold text-foreground-heading">{{ archivoSeleccionado.name }}</span>
+              <span class="text-xs tabular-nums text-muted-foreground">({{ tamanoLegible(archivoSeleccionado.size) }})</span>
+              <button type="button" class="text-xs font-bold text-danger-foreground underline" (click)="quitarArchivo()" [disabled]="cargandoArchivo">Quitar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="btn-secundario cursor-pointer !min-h-[40px] !px-4 text-xs focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+            <span>Elegir archivo</span>
+            <input #inputArchivo id="archivo" class="sr-only" type="file" accept=".xlsx,.xls,.csv" (change)="seleccionarArchivo($event)" />
+          </label>
+          <button type="button" class="btn-primario !min-h-[40px]" (click)="cargarArchivo()" [disabled]="cargandoArchivo || !archivoSeleccionado" [attr.aria-busy]="cargandoArchivo">
+            <svg *ngIf="cargandoArchivo" aria-hidden="true" class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3"/><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+            <span>{{ cargandoArchivo ? "Procesando archivo…" : "Cargar empleados" }}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resultado detallado de la carga -->
+    <div class="mt-4 rounded-xl border border-ink-soft bg-white p-4 shadow-card animate-scale-in" *ngIf="resultadoCarga" role="status">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="font-bold text-navy-900">{{ resultadoCarga.mensaje }}</p>
+        <div class="flex flex-wrap gap-2 text-xs font-bold">
+          <span class="rounded-full bg-navy-50 px-3 py-1 text-navy-800">Filas: {{ resultadoCarga.totalFilas ?? (resultadoCarga.insertados + resultadoCarga.fallidos) }}</span>
+          <span class="insignia-ok">Creados: {{ resultadoCarga.insertados }}</span>
+          <span [ngClass]="resultadoCarga.fallidos > 0 ? 'insignia-err' : 'rounded-full bg-slate-100 px-3 py-1 text-slate-600'">Errores: {{ resultadoCarga.fallidos }}</span>
+        </div>
+      </div>
+
+      <div *ngIf="resultadoCarga.empleadosCreados && resultadoCarga.empleadosCreados.length > 0" class="mt-3 rounded-lg bg-ok-bg/60 p-3 text-xs text-ok-dark">
+        <p class="mb-1.5 font-bold">Empleados agregados:</p>
+        <ul class="space-y-0.5 break-words">
+          <li *ngFor="let c of resultadoCarga.empleadosCreados | slice:0:10">
+            Fila {{ c.fila }} · <strong>{{ c.nombre }}</strong> ({{ c.documento }}) — {{ c.cargo }}, {{ c.area }} · {{ c.correo }}
+          </li>
+        </ul>
+        <p *ngIf="resultadoCarga.empleadosCreados.length > 10" class="mt-1.5 font-semibold">
+          … y {{ resultadoCarga.empleadosCreados.length - 10 }} empleados más registrados correctamente.
+        </p>
+      </div>
+
+      <div *ngIf="resultadoCarga.errores.length > 0" class="mt-3 max-h-60 overflow-y-auto rounded-lg bg-err-bg/60 p-3">
+        <p class="mb-1.5 text-xs font-bold text-err-dark">Detalle de filas con error ({{ resultadoCarga.errores.length }}):</p>
+        <ul class="list-disc space-y-1 pl-5 text-xs text-err-dark break-words">
+          <li *ngFor="let err of resultadoCarga.errores">{{ err }}</li>
+        </ul>
+      </div>
     </div>
   </section>
 
   <p *ngIf="cargando" role="status" class="vacio">Cargando empleados…</p>
 
-  <div class="tabla-wrap animate-fade-up [animation-delay:180ms]" *ngIf="!cargando">
-    <table class="tabla min-w-[820px]">
-      <caption class="sr-only">Listado de empleados</caption>
-      <thead><tr><th scope="col">Documento</th><th scope="col">Nombre completo</th><th scope="col">Cargo</th><th scope="col">Área</th><th scope="col">Ingreso</th><th scope="col">Salario</th><th scope="col">Acciones</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let e of empleados">
-          <td class="whitespace-nowrap">{{ e.tipo_documento || "CC" }} {{ e.numero_documento || e.cedula }}</td>
-          <td class="font-semibold">{{ e.nombre }}</td>
-          <td>{{ e.cargo }}</td>
-          <td>{{ e.area }}</td>
-          <td class="whitespace-nowrap">{{ e.fecha_ingreso | date:"yyyy-MM-dd" }}</td>
-          <td class="whitespace-nowrap">{{ e.salario | currency:"COP":"symbol-narrow":"1.0-0" }}</td>
-          <td>
-            <div class="flex flex-wrap gap-1.5">
-              <button type="button" class="btn-mini" (click)="editar(e)" [attr.aria-label]="'Editar ' + e.nombre">Editar</button>
-              <button type="button" class="btn-mini-peligro" (click)="eliminar(e)" [attr.aria-label]="'Eliminar ' + e.nombre">Eliminar</button>
+  <section *ngIf="!cargando" class="animate-fade-up [animation-delay:180ms]" aria-label="Listado de empleados">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        <div class="w-full sm:w-72">
+          <label class="sr-only" for="filtroTabla">Filtrar listado de empleados</label>
+          <input id="filtroTabla" class="input !min-h-[40px] text-sm" type="search" autocomplete="off" spellcheck="false" [(ngModel)]="filtroTabla" (ngModelChange)="recalcularTabla(true)" name="filtroTabla"
+                 placeholder="Filtrar por nombre, documento, cargo o área…" />
+        </div>
+        <label class="sr-only" for="filtroEstado">Estado</label>
+        <select id="filtroEstado" class="input !min-h-[40px] !w-auto text-sm" [(ngModel)]="filtroEstado" (ngModelChange)="recalcularTabla(true)" name="filtroEstado">
+          <option value="todos">Todos los estados</option>
+          <option value="activos">Solo activos</option>
+          <option value="inactivos">Solo inactivos</option>
+        </select>
+      </div>
+      <span class="text-xs font-bold text-ink-muted">Mostrando {{ empleadosPaginados.length }} de {{ empleadosFiltrados.length }} empleados (total: {{ empleados.length }})</span>
+    </div>
+
+    <ng-container *ngIf="empleadosPaginados.length > 0; else sinEmpleados">
+      <!-- Vista tarjetas (móvil, tablet y pantallas medianas: 0 scroll horizontal) -->
+      <div class="grid gap-3 md:grid-cols-2 xl:hidden">
+        <article *ngFor="let e of empleadosPaginados; trackBy: trackByEmpleado" class="card !p-4 flex flex-col justify-between gap-3">
+          <div>
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="min-w-0 flex-1">
+                <h3 class="break-words text-sm font-bold text-foreground-heading">{{ e.nombre }}</h3>
+                <p class="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ e.tipo_documento || "CC" }} {{ e.numero_documento || e.cedula }}</p>
+              </div>
+              <span [ngClass]="e.id_estado === 2 ? 'insignia-err' : 'insignia-ok'">{{ e.id_estado === 2 ? "Inactivo" : "Activo" }}</span>
             </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+              <div>
+                <dt class="font-bold uppercase tracking-wider text-muted-foreground">Cargo</dt>
+                <dd class="break-words font-medium text-foreground">{{ e.cargo }}</dd>
+              </div>
+              <div>
+                <dt class="font-bold uppercase tracking-wider text-muted-foreground">Área</dt>
+                <dd class="break-words font-medium text-foreground">{{ e.area }}</dd>
+              </div>
+              <div>
+                <dt class="font-bold uppercase tracking-wider text-muted-foreground">Ingreso</dt>
+                <dd class="tabular-nums text-foreground">{{ e.fecha_ingreso | date:"yyyy-MM-dd" }}</dd>
+              </div>
+              <div>
+                <dt class="font-bold uppercase tracking-wider text-muted-foreground">Salario</dt>
+                <dd class="font-semibold tabular-nums text-foreground">{{ e.salario | currency:"COP":"symbol-narrow":"1.0-0" }}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div class="flex flex-wrap gap-1.5 border-t border-border/70 pt-3">
+            <a *ngIf="e.id_estado !== 2" class="btn-mini" routerLink="/certificados" [queryParams]="{ empleado: e.id_empleado }">Certificado</a>
+            <button type="button" class="btn-mini" (click)="editar(e)">Editar</button>
+            <button type="button" [ngClass]="e.id_estado === 2 ? 'btn-mini' : 'btn-mini-peligro'" (click)="cambiarEstado(e)">
+              {{ e.id_estado === 2 ? "Reactivar" : "Desactivar" }}
+            </button>
+            <button type="button" class="btn-mini-peligro" (click)="eliminar(e)">Eliminar</button>
+          </div>
+        </article>
+      </div>
+
+      <!-- Vista tabla compacta (escritorio xl+: sin min-width fijo, 0 scroll horizontal) -->
+      <div class="tabla-wrap hidden xl:block">
+        <table class="tabla">
+          <caption class="sr-only">Listado de empleados</caption>
+          <thead>
+            <tr>
+              <th scope="col">Empleado</th>
+              <th scope="col">Cargo y área</th>
+              <th scope="col">Ingreso</th>
+              <th scope="col">Salario</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let e of empleadosPaginados; trackBy: trackByEmpleado">
+              <td>
+                <div class="flex flex-wrap items-center gap-1.5">
+                  <span class="font-semibold text-foreground-heading">{{ e.nombre }}</span>
+                  <span *ngIf="e.id_estado === 2" class="insignia-err">Inactivo</span>
+                </div>
+                <small class="font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ e.tipo_documento || "CC" }} {{ e.numero_documento || e.cedula }}</small>
+              </td>
+              <td>
+                <span class="block font-medium text-foreground">{{ e.cargo }}</span>
+                <small class="text-xs text-muted-foreground">{{ e.area }}</small>
+              </td>
+              <td class="text-xs tabular-nums text-muted-foreground">{{ e.fecha_ingreso | date:"yyyy-MM-dd" }}</td>
+              <td class="text-xs font-semibold tabular-nums">{{ e.salario | currency:"COP":"symbol-narrow":"1.0-0" }}</td>
+              <td>
+                <div class="flex flex-wrap gap-1.5">
+                  <a *ngIf="e.id_estado !== 2" class="btn-mini" routerLink="/certificados" [queryParams]="{ empleado: e.id_empleado }" [attr.aria-label]="'Generar certificado de ' + e.nombre">Certificado</a>
+                  <button type="button" class="btn-mini" (click)="editar(e)" [attr.aria-label]="'Editar ' + e.nombre">Editar</button>
+                  <button type="button" [ngClass]="e.id_estado === 2 ? 'btn-mini' : 'btn-mini-peligro'" (click)="cambiarEstado(e)" [attr.aria-label]="(e.id_estado === 2 ? 'Reactivar ' : 'Desactivar ') + e.nombre">
+                    {{ e.id_estado === 2 ? "Reactivar" : "Desactivar" }}
+                  </button>
+                  <button type="button" class="btn-mini-peligro" (click)="eliminar(e)" [attr.aria-label]="'Eliminar ' + e.nombre">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <ng-template #sinEmpleados>
+      <app-estado-vacio titulo="Sin coincidencias" descripcion="No hay empleados que coincidan con el filtro aplicado."></app-estado-vacio>
+    </ng-template>
+
+    <!-- Paginación -->
+    <div *ngIf="totalPaginas > 1" class="mt-4 flex flex-wrap items-center justify-between gap-2 text-sm">
+      <span class="text-xs font-semibold tabular-nums text-muted-foreground">Página {{ paginaActual }} de {{ totalPaginas }}</span>
+      <div class="flex items-center gap-2">
+        <button type="button" class="btn-mini" (click)="irAPagina(paginaActual - 1)" [disabled]="paginaActual <= 1">Anterior</button>
+        <button type="button" class="btn-mini" (click)="irAPagina(paginaActual + 1)" [disabled]="paginaActual >= totalPaginas">Siguiente</button>
+      </div>
+    </div>
+  </section>
+
+  <app-confirmar-dialogo
+    [abierto]="!!confirmacionPendiente"
+    [titulo]="confirmacionPendiente?.titulo || ''"
+    [descripcion]="confirmacionPendiente?.descripcion || ''"
+    [textoConfirmar]="confirmacionPendiente?.textoConfirmar || 'Confirmar'"
+    [variante]="confirmacionPendiente?.variante || 'peligro'"
+    (confirmar)="confirmarDialogo()"
+    (cancelar)="cancelarDialogo()">
+  </app-confirmar-dialogo>
 </div>

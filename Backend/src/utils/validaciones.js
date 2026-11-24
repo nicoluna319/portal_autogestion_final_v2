@@ -58,6 +58,20 @@ const REGEX_NOMBRE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ][A-Za-zÁÉÍÓÚÜÑ
 
 // Acepta el código (CC) o el nombre (Cédula de Ciudadanía), sin importar mayúsculas ni tildes.
 const sinTildes = (t) => texto(t).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+// Normaliza cualquier entrada de búsqueda eliminando tildes, signos raros y espacios extras.
+function limpiarBusqueda(valor) {
+  return sinTildes(valor).replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function limpiarDocumentoBusqueda(valor) {
+  return limpiarBusqueda(valor).replace(/\s+/g, "");
+}
+
+function tokensBusqueda(valor) {
+  const limpio = limpiarBusqueda(valor);
+  return limpio ? limpio.split(/\s+/).filter(Boolean) : [];
+}
 function normalizarTipoDocumento(valor) {
   const v = sinTildes(valor);
   return Object.keys(TIPOS_DOCUMENTO).find((c) => c.toLowerCase() === v || sinTildes(TIPOS_DOCUMENTO[c]) === v) || null;
@@ -132,11 +146,22 @@ function validarEmpleado({ cedula, cargo, area, fechaIngreso, salario, promedioH
   );
 }
 
-function validarSolicitud({ tipoSolicitud, descripcion }) {
-  return (
+function validarSolicitud({ tipoSolicitud, descripcion, fechaInicio, fechaFin }) {
+  const errorBase =
     validarTexto(tipoSolicitud, "El tipo de solicitud", 2, 100) ||
-    (texto(descripcion).length > 1000 ? "La descripción no puede superar 1000 caracteres" : null)
-  );
+    (texto(descripcion).length > 1000 ? "La descripción no puede superar 1000 caracteres" : null);
+  if (errorBase) return errorBase;
+
+  const tieneInicio = fechaInicio !== undefined && fechaInicio !== null && texto(fechaInicio) !== "";
+  const tieneFin = fechaFin !== undefined && fechaFin !== null && texto(fechaFin) !== "";
+  if (tieneInicio || tieneFin) {
+    const ini = tieneInicio ? normalizarFecha(fechaInicio) : null;
+    const fin = tieneFin ? normalizarFecha(fechaFin) : null;
+    if (tieneInicio && !ini) return "La fecha de inicio no es válida (use AAAA-MM-DD)";
+    if (tieneFin && !fin) return "La fecha de fin no es válida (use AAAA-MM-DD)";
+    if (ini && fin && fin < ini) return "La fecha de fin no puede ser anterior a la fecha de inicio";
+  }
+  return null;
 }
 
-module.exports = { TIPOS_DOCUMENTO, GENEROS, validarDocumento, validarPersona, nombreCompleto, dividirNombre, normalizarTipoDocumento, normalizarGenero, texto, validarTexto, validarCorreo, validarContrasena, normalizarFecha, validarUsuario, validarEmpleado, validarSolicitud };
+module.exports = { TIPOS_DOCUMENTO, GENEROS, validarDocumento, validarPersona, nombreCompleto, dividirNombre, normalizarTipoDocumento, normalizarGenero, texto, validarTexto, validarCorreo, validarContrasena, normalizarFecha, validarUsuario, validarEmpleado, validarSolicitud, limpiarBusqueda, limpiarDocumentoBusqueda, tokensBusqueda };

@@ -12,14 +12,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
 
   const esApi = req.url.startsWith(environment.apiUrl);
-  const esLogin = req.url === `${environment.apiUrl}/login`;
+  const esAuthPublica =
+    req.url === `${environment.apiUrl}/login` ||
+    req.url.startsWith(`${environment.apiUrl}/login/olvide-contrasena`) ||
+    req.url.startsWith(`${environment.apiUrl}/login/validar-token-recuperacion`) ||
+    req.url.startsWith(`${environment.apiUrl}/login/restablecer-contrasena`);
   const token = auth.obtenerToken();
 
-  const peticion = esApi && token ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
+  const peticion = esApi && token && !esAuthPublica ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : req;
 
   return next(peticion).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401 && esApi && !esLogin) {
+      if (error.status === 401 && esApi && !esAuthPublica) {
         auth.logout();
         router.navigate(["/login"], { queryParams: { expirada: 1 } });
       }

@@ -1,19 +1,19 @@
-<div class="mx-auto max-w-7xl">
-  <header class="mb-6 animate-fade-up">
-    <h1 class="titulo-pagina">Gestión de usuarios</h1>
-    <p class="subtitulo-pagina">Crea cuentas de acceso, edítalas o desactívalas.</p>
-  </header>
+<div [ngClass]="embebido ? '' : 'mx-auto max-w-7xl'">
+  <app-encabezado-pagina
+    *ngIf="!embebido"
+    titulo="Gestión de usuarios"
+    subtitulo="Crea cuentas de acceso, edítalas o desactívalas.">
+  </app-encabezado-pagina>
 
-  <div *ngIf="mensaje" class="alerta" [class.alerta-error]="tipoMensaje === 'error'" [attr.role]="tipoMensaje === 'error' ? 'alert' : 'status'">
-    <span>{{ mensaje }}</span>
+  <app-alerta [mensaje]="mensaje" [variante]="varianteMensaje">
     <button *ngIf="existente" type="button" class="font-bold underline" (click)="editar(existente)">Editar este usuario</button>
-  </div>
+  </app-alerta>
 
   <section class="card mb-6 animate-fade-up [animation-delay:60ms]" aria-label="Buscar usuario">
-    <label class="label" for="busqueda">Buscar por número de documento</label>
-    <div class="flex flex-wrap gap-2">
-      <input id="busqueda" class="input max-w-sm flex-1" type="text" [(ngModel)]="busqueda" name="busqueda" placeholder="Ej. 1234567890" (keyup.enter)="buscar()" />
-      <button type="button" class="btn-primario" (click)="buscar()">Buscar</button>
+    <label class="label" for="busqueda">Buscar usuario para editar (documento, nombre o correo)</label>
+    <div class="flex flex-col gap-2 sm:flex-row">
+      <input id="busqueda" class="input flex-1 sm:max-w-md" type="text" autocomplete="off" spellcheck="false" [(ngModel)]="busqueda" name="busqueda" placeholder="Ej. 1234567890, José Triviño o correo…" (keyup.enter)="buscar()" />
+      <button type="button" class="btn-primario sm:w-auto" (click)="buscar()">Buscar</button>
     </div>
   </section>
 
@@ -29,7 +29,7 @@
       </div>
       <div>
         <label class="label" for="numDoc">Número de identificación *</label>
-        <input id="numDoc" class="input" type="text" [(ngModel)]="documentoNumero" name="numDoc" required />
+        <input id="numDoc" class="input" type="text" autocomplete="off" spellcheck="false" [(ngModel)]="documentoNumero" name="numDoc" placeholder="Ej. 1020304001…" required />
       </div>
     </div>
     <div class="mt-6 flex justify-end"><button type="submit" class="btn-primario">Continuar</button></div>
@@ -40,8 +40,8 @@
     <h2 class="titulo-seccion">{{ modoEdicion ? "Editar usuario" : "Nuevo usuario · Datos personales" }}</h2>
     <div class="grid gap-4 sm:grid-cols-2">
       <ng-container *ngIf="!modoEdicion || usuarioSeleccionado.numeroDocumento; else sinDocumento">
-        <div class="rounded-xl bg-navy-50 px-4 py-3"><span class="block text-xs font-bold uppercase tracking-wider text-ink-muted">Tipo de documento</span><span class="font-semibold">{{ nombreTipo(usuarioSeleccionado.tipoDocumento) }}</span></div>
-        <div class="rounded-xl bg-navy-50 px-4 py-3"><span class="block text-xs font-bold uppercase tracking-wider text-ink-muted">Número de identificación</span><span class="font-semibold">{{ usuarioSeleccionado.numeroDocumento }}</span></div>
+        <div class="rounded-control bg-surface-tint px-4 py-3"><span class="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Tipo de documento</span><span class="font-semibold">{{ nombreTipo(usuarioSeleccionado.tipoDocumento) }}</span></div>
+        <div class="rounded-control bg-surface-tint px-4 py-3"><span class="block text-xs font-bold uppercase tracking-wider text-muted-foreground">Número de identificación</span><span class="font-mono font-semibold tabular-nums" translate="no">{{ usuarioSeleccionado.numeroDocumento }}</span></div>
       </ng-container>
       <ng-template #sinDocumento>
         <div>
@@ -52,14 +52,14 @@
         </div>
         <div>
           <label class="label" for="ndEd">Número de identificación *</label>
-          <input id="ndEd" class="input" type="text" [(ngModel)]="usuarioSeleccionado.numeroDocumento" name="ndEd" required />
+          <input id="ndEd" class="input" type="text" autocomplete="off" spellcheck="false" [(ngModel)]="usuarioSeleccionado.numeroDocumento" name="ndEd" placeholder="Ej. 1020304001…" required />
         </div>
       </ng-template>
 
-      <div><label class="label" for="pn">Primer nombre *</label><input id="pn" class="input" type="text" [(ngModel)]="usuarioSeleccionado.primerNombre" name="pn" required /></div>
-      <div><label class="label" for="sn">Segundo nombre</label><input id="sn" class="input" type="text" [(ngModel)]="usuarioSeleccionado.segundoNombre" name="sn" /></div>
-      <div><label class="label" for="pa">Primer apellido *</label><input id="pa" class="input" type="text" [(ngModel)]="usuarioSeleccionado.primerApellido" name="pa" required /></div>
-      <div><label class="label" for="sa">Segundo apellido</label><input id="sa" class="input" type="text" [(ngModel)]="usuarioSeleccionado.segundoApellido" name="sa" /></div>
+      <div><label class="label" for="pn">Primer nombre *</label><input id="pn" class="input" type="text" autocomplete="given-name" [(ngModel)]="usuarioSeleccionado.primerNombre" name="pn" required /></div>
+      <div><label class="label" for="sn">Segundo nombre</label><input id="sn" class="input" type="text" autocomplete="additional-name" [(ngModel)]="usuarioSeleccionado.segundoNombre" name="sn" /></div>
+      <div><label class="label" for="pa">Primer apellido *</label><input id="pa" class="input" type="text" autocomplete="family-name" [(ngModel)]="usuarioSeleccionado.primerApellido" name="pa" required /></div>
+      <div><label class="label" for="sa">Segundo apellido</label><input id="sa" class="input" type="text" autocomplete="off" [(ngModel)]="usuarioSeleccionado.segundoApellido" name="sa" /></div>
       <div>
         <label class="label" for="gen">Género *</label>
         <select id="gen" class="input" [(ngModel)]="usuarioSeleccionado.genero" name="gen" required>
@@ -67,10 +67,10 @@
           <option *ngFor="let g of generos" [value]="g">{{ g }}</option>
         </select>
       </div>
-      <div><label class="label" for="correo">Correo electrónico *</label><input id="correo" class="input" type="email" [(ngModel)]="usuarioSeleccionado.correo" name="correo" required /></div>
+      <div><label class="label" for="correo">Correo electrónico *</label><input id="correo" class="input" type="email" inputmode="email" spellcheck="false" autocomplete="email" [(ngModel)]="usuarioSeleccionado.correo" name="correo" placeholder="ej. nombre@empresa.com…" required /></div>
       <div>
         <label class="label" for="clave">{{ modoEdicion ? "Nueva contraseña (opcional)" : "Contraseña *" }}</label>
-        <input id="clave" class="input" type="password" [(ngModel)]="usuarioSeleccionado.contrasena" name="clave" [required]="!modoEdicion" autocomplete="new-password" />
+        <input id="clave" class="input" type="password" spellcheck="false" [(ngModel)]="usuarioSeleccionado.contrasena" name="clave" [required]="!modoEdicion" autocomplete="new-password" placeholder="Mínimo 6 caracteres…" />
       </div>
       <div>
         <label class="label" for="rol">Rol *</label>
@@ -87,27 +87,99 @@
     </div>
   </form>
 
-  <p *ngIf="cargando" role="status" class="vacio">Cargando usuarios…</p>
+  <p *ngIf="cargando" role="status" aria-live="polite" class="vacio">Cargando usuarios…</p>
 
-  <div class="tabla-wrap animate-fade-up [animation-delay:120ms]" *ngIf="!cargando">
-    <table class="tabla">
-      <caption class="sr-only">Listado de usuarios</caption>
-      <thead><tr><th scope="col">Documento</th><th scope="col">Nombre completo</th><th scope="col">Correo</th><th scope="col">Rol</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
-      <tbody>
-        <tr *ngFor="let u of usuarios">
-          <td class="whitespace-nowrap">{{ u.tipoDocumento }} {{ u.numeroDocumento }}</td>
-          <td class="min-w-[170px] font-semibold">{{ u.nombre }}</td>
-          <td class="min-w-[210px] break-words">{{ u.correo }}</td>
-          <td>{{ u.idRol === 1 ? "Administrador" : "Empleado" }}</td>
-          <td><span [ngClass]="u.idEstado === 1 ? 'insignia-ok' : 'insignia-err'">{{ u.idEstado === 1 ? "Activo" : "Inactivo" }}</span></td>
-          <td>
-            <div class="flex flex-wrap gap-1.5">
-              <button type="button" class="btn-mini" (click)="editar(u)" [attr.aria-label]="'Editar ' + u.nombre">Editar</button>
-              <button type="button" class="btn-mini-peligro" (click)="eliminar(u)" [attr.aria-label]="'Eliminar ' + u.nombre">Eliminar</button>
+  <section *ngIf="!cargando" class="animate-fade-up [animation-delay:120ms]" aria-label="Listado de usuarios">
+    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+        <div class="w-full sm:w-72">
+          <label class="sr-only" for="filtroUsuarios">Filtrar usuarios</label>
+          <input id="filtroUsuarios" class="input !min-h-[40px] text-sm" type="search" autocomplete="off" spellcheck="false" [(ngModel)]="filtroTabla" (ngModelChange)="aplicarFiltro()" name="filtroUsuarios" placeholder="Filtrar por nombre, documento o correo…" />
+        </div>
+        <label class="sr-only" for="filtroRol">Rol</label>
+        <select id="filtroRol" class="input !min-h-[40px] !w-auto text-sm" [(ngModel)]="filtroRol" (ngModelChange)="aplicarFiltro()" name="filtroRol">
+          <option value="todos">Todos los roles</option>
+          <option value="admins">Administradores</option>
+          <option value="empleados">Empleados</option>
+        </select>
+      </div>
+      <span class="text-xs font-bold tabular-nums text-muted-foreground">Mostrando {{ usuariosFiltrados.length }} de {{ usuarios.length }} usuarios</span>
+    </div>
+
+    <ng-container *ngIf="usuariosFiltrados.length > 0; else sinUsuarios">
+      <!-- Vista tarjetas (móvil, tablet y pantallas medianas: 0 scroll horizontal) -->
+      <div class="grid gap-3 md:grid-cols-2 xl:hidden">
+        <article *ngFor="let u of usuariosFiltrados; trackBy: trackByUsuario" class="card !p-4">
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <h3 class="break-words text-sm font-bold text-foreground-heading">{{ u.nombre }}</h3>
+              <p class="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ u.tipoDocumento }} {{ u.numeroDocumento }}</p>
             </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <span [ngClass]="u.idEstado === 1 ? 'insignia-ok' : 'insignia-err'">{{ u.idEstado === 1 ? "Activo" : "Inactivo" }}</span>
+          </div>
+          <dl class="mt-3 space-y-1.5 text-xs">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-2">
+              <dt class="font-bold uppercase tracking-wider text-muted-foreground">Correo</dt>
+              <dd class="min-w-0 break-all font-medium text-foreground">{{ u.correo }}</dd>
+            </div>
+            <div class="flex items-baseline justify-between gap-x-2">
+              <dt class="font-bold uppercase tracking-wider text-muted-foreground">Rol</dt>
+              <dd class="font-semibold text-foreground">{{ u.idRol === 1 ? "Administrador" : "Empleado" }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex flex-wrap gap-2 border-t border-border/70 pt-3">
+            <button type="button" class="btn-mini flex-1 justify-center" (click)="editar(u)" [attr.aria-label]="'Editar ' + u.nombre">Editar</button>
+            <button type="button" class="btn-mini-peligro flex-1 justify-center" (click)="eliminar(u)" [attr.aria-label]="'Eliminar ' + u.nombre">Eliminar</button>
+          </div>
+        </article>
+      </div>
+
+      <!-- Vista tabla (escritorio amplio: columnas compactas sin barra horizontal) -->
+      <div class="tabla-wrap hidden xl:block">
+        <table class="tabla">
+          <caption class="sr-only">Listado de usuarios</caption>
+          <thead>
+            <tr>
+              <th scope="col">Usuario</th>
+              <th scope="col">Correo</th>
+              <th scope="col">Rol</th>
+              <th scope="col">Estado</th>
+              <th scope="col">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of usuariosFiltrados; trackBy: trackByUsuario">
+              <td>
+                <span class="block font-semibold text-foreground-heading">{{ u.nombre }}</span>
+                <small class="font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ u.tipoDocumento }} {{ u.numeroDocumento }}</small>
+              </td>
+              <td class="break-all text-xs">{{ u.correo }}</td>
+              <td class="text-xs font-semibold">{{ u.idRol === 1 ? "Administrador" : "Empleado" }}</td>
+              <td><span [ngClass]="u.idEstado === 1 ? 'insignia-ok' : 'insignia-err'">{{ u.idEstado === 1 ? "Activo" : "Inactivo" }}</span></td>
+              <td>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" class="btn-mini" (click)="editar(u)" [attr.aria-label]="'Editar ' + u.nombre">Editar</button>
+                  <button type="button" class="btn-mini-peligro" (click)="eliminar(u)" [attr.aria-label]="'Eliminar ' + u.nombre">Eliminar</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </ng-container>
+
+    <ng-template #sinUsuarios>
+      <app-estado-vacio titulo="Sin coincidencias" descripcion="No hay usuarios que coincidan con el filtro aplicado."></app-estado-vacio>
+    </ng-template>
+  </section>
+
+  <app-confirmar-dialogo
+    [abierto]="!!usuarioAEliminar"
+    titulo="Eliminar usuario"
+    [descripcion]="'¿Seguro que deseas eliminar a ' + (usuarioAEliminar?.nombre || '') + '? Si tiene perfil de empleado o historial asociado, te recomendamos desactivarlo en lugar de eliminarlo.'"
+    textoConfirmar="Eliminar usuario"
+    variante="peligro"
+    (confirmar)="confirmarEliminacion()"
+    (cancelar)="usuarioAEliminar = null">
+  </app-confirmar-dialogo>
 </div>

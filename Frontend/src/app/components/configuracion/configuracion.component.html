@@ -1,0 +1,34 @@
+<div class="mx-auto max-w-7xl">
+  <app-encabezado-pagina
+    titulo="Configuración"
+    subtitulo="Administra las cuentas de acceso, roles y datos personales de administradores y empleados.">
+    <div class="inline-flex flex-wrap rounded-control border border-border bg-surface p-1 shadow-xs" role="tablist" aria-label="Secciones de configuración">
+      <button type="button" role="tab" [attr.aria-selected]="seccionActiva === 'usuarios'"
+              class="rounded-lg px-3.5 py-2 text-xs font-bold transition-colors duration-fast"
+              [ngClass]="seccionActiva === 'usuarios' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+              (click)="seccionActiva = 'usuarios'">
+        Usuarios (Admins y Empleados)
+      </button>
+      <button type="button" role="tab" [attr.aria-selected]="seccionActiva === 'seguridad'"
+              class="rounded-lg px-3.5 py-2 text-xs font-bold transition-colors duration-fast"
+              [ngClass]="seccionActiva === 'seguridad' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+              (click)="seccionActiva = 'seguridad'">
+        Seguridad de mi cuenta
+      </button>
+    </div>
+  </app-encabezado-pagina>
+
+  <section *ngIf="seccionActiva === 'usuarios'" role="tabpanel" aria-label="Gestión de usuarios">
+    <app-usuarios [embebido]="true"></app-usuarios>
+  </section>
+
+  <section *ngIf="seccionActiva === 'seguridad'" role="tabpanel" aria-label="Seguridad de cuenta" class="card max-w-2xl animate-fade-up">
+    <h2 class="titulo-seccion">Seguridad de mi cuenta</h2>
+    <p class="ayuda mb-4">
+      Actualiza periódicamente tu contraseña de administrador para mantener protegidos los datos del portal.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      <a routerLink="/cambiar-contrasena" class="btn-primario">Cambiar mi contraseña</a>
+    </div>
+  </section>
+</div>

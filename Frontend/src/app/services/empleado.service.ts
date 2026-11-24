@@ -3,6 +3,17 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, catchError, of, throwError } from "rxjs";
 import { environment } from "../../environments/environment";
 import { Empleado, ResultadoCargaMasiva } from "../models/empleado.model";
+import { RespuestaApi } from "../models/catalogos";
+
+export interface EmpleadoPayload {
+  idEmpleado?: number;
+  numeroDocumento?: string;
+  cargo: string;
+  area: string;
+  fechaIngreso: string;
+  salario: number;
+  promedioHorasExtras: number;
+}
 
 @Injectable({ providedIn: "root" })
 export class EmpleadoService {
@@ -22,28 +33,30 @@ export class EmpleadoService {
     return this.http.get<Empleado>(`${this.baseUrl}?idUsuario=${idUsuario}`);
   }
 
-  /** Devuelve el empleado con ese número de documento, o null si no existe. */
   consultarPorDocumento(documento: string): Observable<Empleado | null> {
     return this.http.get<Empleado>(`${this.baseUrl}?documento=${encodeURIComponent(documento.trim())}`).pipe(
       catchError((err: HttpErrorResponse) => (err.status === 404 ? of(null) : throwError(() => err)))
     );
   }
 
-  /** Descarga la plantilla de Excel (el token viaja en el encabezado, por eso no es un enlace simple). */
-  descargarPlantilla(): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/plantilla`, { responseType: "blob" });
+  descargarPlantilla(formato: "xlsx" | "csv" = "xlsx"): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/plantilla?formato=${formato}`, { responseType: "blob" });
   }
 
-  crear(empleado: any): Observable<any> {
-    return this.http.post(this.baseUrl, empleado);
+  crear(empleado: EmpleadoPayload): Observable<RespuestaApi> {
+    return this.http.post<RespuestaApi>(this.baseUrl, empleado);
   }
 
-  actualizar(empleado: any): Observable<any> {
-    return this.http.put(this.baseUrl, empleado);
+  actualizar(empleado: EmpleadoPayload): Observable<RespuestaApi> {
+    return this.http.put<RespuestaApi>(this.baseUrl, empleado);
   }
 
-  eliminar(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}?id=${id}`);
+  cambiarEstado(idEmpleado: number, idEstado: 1 | 2): Observable<RespuestaApi> {
+    return this.http.patch<RespuestaApi>(`${this.baseUrl}/estado`, { idEmpleado, idEstado });
+  }
+
+  eliminar(id: number): Observable<RespuestaApi> {
+    return this.http.delete<RespuestaApi>(`${this.baseUrl}?id=${id}`);
   }
 
   cargaMasiva(archivo: File): Observable<ResultadoCargaMasiva> {

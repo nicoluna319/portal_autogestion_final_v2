@@ -6,6 +6,7 @@ const { autenticar } = require("../utils/auth");
 router.use(autenticar);
 
 router.get("/", certificadosController.listarOConsultar);
+router.get("/:id/descargar", certificadosController.descargarExistente);
 router.post("/", certificadosController.generar);
 
 module.exports = router;

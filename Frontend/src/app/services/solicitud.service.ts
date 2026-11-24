@@ -3,6 +3,7 @@ import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { environment } from "../../environments/environment";
 import { Solicitud, NuevaSolicitud } from "../models/solicitud.model";
+import { RespuestaApi } from "../models/catalogos";
 
 @Injectable({ providedIn: "root" })
 export class SolicitudService {
@@ -22,15 +23,15 @@ export class SolicitudService {
     return this.http.get<Solicitud[]>(`${this.baseUrl}?empleado=${idEmpleado}`);
   }
 
-  crear(solicitud: NuevaSolicitud): Observable<any> {
-    return this.http.post(this.baseUrl, solicitud);
+  crear(solicitud: NuevaSolicitud): Observable<RespuestaApi> {
+    return this.http.post<RespuestaApi>(this.baseUrl, solicitud);
   }
 
-  actualizarEstado(idSolicitud: number, idEstado: number, mensaje?: string): Observable<any> {
-    return this.http.put(this.baseUrl, { idSolicitud, idEstado, ...(mensaje ? { mensaje } : {}) });
+  actualizarEstado(idSolicitud: number, idEstado: number, mensaje?: string): Observable<RespuestaApi> {
+    return this.http.put<RespuestaApi>(this.baseUrl, { idSolicitud, idEstado, ...(mensaje ? { mensaje } : {}) });
   }
 
-  eliminar(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}?id=${id}`);
+  eliminar(id: number): Observable<RespuestaApi> {
+    return this.http.delete<RespuestaApi>(`${this.baseUrl}?id=${id}`);
   }
 }

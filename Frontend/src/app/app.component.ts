@@ -1,6 +1,7 @@
-import { Component, HostListener } from "@angular/core";
+import { Component, DestroyRef, HostListener, inject } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from "@angular/router";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter } from "rxjs";
 import { AuthService } from "./services/auth.service";
 
@@ -11,6 +12,8 @@ import { AuthService } from "./services/auth.service";
   templateUrl: "./app.component.html",
 })
 export class AppComponent {
+  private readonly destroyRef = inject(DestroyRef);
+
   title = "Portal de Autogestión";
   mostrarNav = false;
   menuAbierto = false;
@@ -18,10 +21,15 @@ export class AppComponent {
 
   constructor(public authService: AuthService, private router: Router) {
     this.actualizarNav();
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe(() => {
-      this.actualizarNav();
-      this.menuAbierto = false;
-    });
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe(() => {
+        this.actualizarNav();
+        this.menuAbierto = false;
+      });
   }
 
   get usuario() {
@@ -38,7 +46,10 @@ export class AppComponent {
   }
 
   actualizarNav(): void {
-    this.mostrarNav = this.authService.estaAutenticado() && this.router.url !== "/login";
+    const rutaBase = this.router.url.split("?")[0];
+    const esRutaPublica =
+      rutaBase === "/login" || rutaBase === "/olvide-contrasena" || rutaBase === "/restablecer-contrasena";
+    this.mostrarNav = this.authService.estaAutenticado() && !esRutaPublica;
   }
 
   @HostListener("document:keydown.escape")

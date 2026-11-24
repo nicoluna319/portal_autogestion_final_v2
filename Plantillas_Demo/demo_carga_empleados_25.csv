@@ -1,0 +1,26 @@
+﻿tipoDocumento,numeroDocumento,primerNombre,segundoNombre,primerApellido,segundoApellido,genero,correo,contrasena,cargo,area,fechaIngreso,salario,promedioHorasExtras
+CC,1020304001,Camila,Andrea,Rodríguez,Martínez,Femenino,crodriguez@portalautogestion.com,Clave2026*,Desarrolladora Backend,Tecnología,2022-02-14,4800000,8
+CC,1020304002,Sebastián,David,Gómez,Herrera,Masculino,sgomez@portalautogestion.com,,Ingeniero DevOps,Tecnología,2021-08-01,5600000,12.5
+CC,1020304003,Valentina,,López,Ramírez,Femenino,vlopez@portalautogestion.com,,Diseñadora UX/UI,Tecnología,2023-01-16,4200000,0
+CC,1020304004,Andrés,Felipe,Castro,Vargas,Masculino,acastro@portalautogestion.com,,Analista de Datos,Tecnología,2023-05-10,4100000,6
+CE,70045123,Mariana,Isabel,Fernández,Silva,Femenino,mfernandez@portalautogestion.com,,Líder de QA,Calidad,2020-09-21,5200000,10
+CC,1020304006,Juan,Pablo,Morales,Díaz,Masculino,jmorales@portalautogestion.com,,Contador Senior,Financiera,2019-11-04,4600000,15
+CC,1020304007,Laura,Sofía,Jiménez,Torres,Femenino,ljimenez@portalautogestion.com,,Analista de Nómina,Gestión Humana,2021-03-08,3400000,4
+CC,1020304008,Mateo,,Rojas,Peña,Masculino,mrojas@portalautogestion.com,,Auxiliar Contable,Financiera,2024-01-22,2400000,18
+CC,1020304009,Paula,Ximena,Vega,Mendoza,Femenino,pvega@portalautogestion.com,,Psicóloga Organizacional,Gestión Humana,2022-07-11,3900000,0
+PPT,88451209,Carlos,Eduardo,Mendoza,Quintero,Masculino,cmendoza@portalautogestion.com,,Coordinador de Logística,Operaciones,2022-10-03,3800000,22
+CC,1020304011,Daniela,Alejandra,Suárez,Gutiérrez,Femenino,dsuarez@portalautogestion.com,,Ejecutiva Comercial,Comercial,2021-06-14,3600000,5
+CC,1020304012,Felipe,Esteban,Navarro,Cárdenas,Masculino,fnavarro@portalautogestion.com,,Asesor Comercial,Comercial,2023-09-04,2900000,9.5
+CC,1020304013,Natalia,,Pardo,Salazar,Femenino,npardo@portalautogestion.com,,Abogada Laboral,Jurídica,2020-04-20,5900000,0
+PA,CO9845123,Diego,Armando,Ríos,Ospina,Masculino,drios@portalautogestion.com,,Arquitecto de Software,Tecnología,2019-08-12,7200000,6
+CC,1020304015,María,Fernanda,Ortega,Mejía,Femenino,mortega@portalautogestion.com,,Analista de Cartera,Financiera,2022-11-28,3200000,7
+CC,1020304016,Santiago,Andrés,Reyes,Bautista,Masculino,sreyes@portalautogestion.com,,Supervisor de Planta,Operaciones,2018-05-07,4300000,28
+CC,1020304017,Gabriela,Lucía,Cortés,Rincón,Femenino,gcortes@portalautogestion.com,,Especialista en SST,Gestión Humana,2021-09-13,4100000,3
+CC,1020304018,Esteban,,Arias,Lozano,Masculino,earias@portalautogestion.com,,Técnico de Soporte,Tecnología,2024-04-01,2600000,14
+CC,1020304019,Juliana,Marcela,Duarte,Castaño,Femenino,jduarte@portalautogestion.com,,Analista de Calidad,Calidad,2022-01-17,3500000,5.5
+CE,70091844,Ricardo,Antonio,Paredes,León,Masculino,rparedes@portalautogestion.com,,Jefe de Compras,Operaciones,2020-02-10,4900000,11
+CC,1020304021,Luisa,Fernanda,Becerra,Moreno,Femenino,lbecerra@portalautogestion.com,,Líder de Servicio al Cliente,Servicio al Cliente,2021-11-15,3700000,6
+CC,1020304022,Cristian,Camilo,Alvarez,Zapata,Masculino,calvarez@portalautogestion.com,,Agente de Soporte,Servicio al Cliente,2024-06-03,2200000,16
+CC,1020304023,Diana,Carolina,Molina,Pineda,Femenino,dmolina@portalautogestion.com,,Especialista de Mercadeo,Comercial,2023-03-20,4000000,0
+CC,1020304024,Jorge,Iván,Giraldo,Escobar,Masculino,jgiraldo@portalautogestion.com,,Auditor Interno,Calidad,2019-06-10,5100000,4
+CC,1020304025,Tatiana,Milena,Rueda,Sánchez,Femenino,trueda@portalautogestion.com,,Analista Administrativo,Gerencia,2023-08-14,3100000,2

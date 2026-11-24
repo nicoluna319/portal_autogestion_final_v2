@@ -1,88 +1,254 @@
 <div class="mx-auto max-w-7xl">
-  <header class="mb-6 animate-fade-up">
-    <h1 class="titulo-pagina">{{ authService.esAdministrador() ? "Gestión de solicitudes" : "Mis solicitudes" }}</h1>
-    <p class="subtitulo-pagina">{{ authService.esAdministrador() ? "Revisa, aprueba o rechaza las solicitudes de los empleados." : "Envía una solicitud y consulta cómo avanza." }}</p>
-  </header>
+  <app-encabezado-pagina
+    [titulo]="esAdmin && vistaAdmin === 'gestion' ? 'Gestión de solicitudes' : 'Mis solicitudes'"
+    [subtitulo]="esAdmin && vistaAdmin === 'gestion'
+      ? 'Revisa, aprueba o rechaza las solicitudes de los empleados. Las decisiones finales se conservan por trazabilidad.'
+      : 'Envía una solicitud y consulta cómo avanza.'">
+    <div *ngIf="esAdmin" class="flex flex-wrap items-center gap-2">
+      <div class="inline-flex flex-wrap rounded-control border border-border bg-surface p-1 shadow-xs" role="tablist" aria-label="Modo de solicitudes">
+        <button type="button" role="tab" [attr.aria-selected]="vistaAdmin === 'gestion'"
+                class="rounded-lg px-3.5 py-2 text-xs font-bold tabular-nums transition-colors duration-fast"
+                [ngClass]="vistaAdmin === 'gestion' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+                (click)="cambiarVistaAdmin('gestion')">
+          Gestionar todas ({{ solicitudes.length }})
+        </button>
+        <button type="button" role="tab" [attr.aria-selected]="vistaAdmin === 'propias'"
+                class="rounded-lg px-3.5 py-2 text-xs font-bold tabular-nums transition-colors duration-fast"
+                [ngClass]="vistaAdmin === 'propias' ? 'bg-navy-800 text-white' : 'text-muted-foreground hover:text-foreground-heading'"
+                (click)="cambiarVistaAdmin('propias')">
+          Mis solicitudes ({{ misSolicitudes.length }})
+        </button>
+      </div>
+      <button *ngIf="vistaAdmin === 'gestion'" type="button" class="btn-primario !min-h-[40px] !px-3.5 text-xs" (click)="cambiarVistaAdmin('propias')">
+        + Nueva solicitud
+      </button>
+    </div>
+  </app-encabezado-pagina>
 
-  <div *ngIf="mensaje" class="alerta" role="status">{{ mensaje }}</div>
+  <app-alerta [mensaje]="mensaje" [variante]="varianteMensaje"></app-alerta>
 
-  <form (ngSubmit)="crear()" class="card mb-6 animate-fade-up [animation-delay:80ms]" *ngIf="!authService.esAdministrador()" aria-labelledby="h-nueva">
+  <!-- Formulario de creación (visible para Empleados y para Admin en "Mis solicitudes") -->
+  <form (ngSubmit)="crear()" class="card mb-6 animate-fade-up [animation-delay:80ms]" *ngIf="puedeCrearSolicitud" aria-labelledby="h-nueva">
     <h2 class="titulo-seccion" id="h-nueva">Nueva solicitud</h2>
-    <div class="grid gap-4 md:grid-cols-[1fr_2fr_auto] md:items-end">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <label class="label" for="tipoSolicitud">Tipo de solicitud *</label>
-        <input id="tipoSolicitud" class="input" type="text" [(ngModel)]="nuevaSolicitud.tipoSolicitud" name="tipoSolicitud" placeholder="Permiso, vacaciones…" required />
+        <select id="tipoSolicitud" class="input" [(ngModel)]="tipoSeleccionado" name="tipoSolicitud" required>
+          <option *ngFor="let t of tiposCatalogo" [value]="t">{{ t }}</option>
+        </select>
+      </div>
+      <div *ngIf="tipoSeleccionado === 'Otro'">
+        <label class="label" for="tipoOtro">Especificar tipo *</label>
+        <input id="tipoOtro" class="input" type="text" autocomplete="off" [(ngModel)]="tipoOtro" name="tipoOtro" placeholder="Ej. Cambio de turno…" required />
       </div>
       <div>
-        <label class="label" for="descSolicitud">Descripción</label>
-        <input id="descSolicitud" class="input" type="text" [(ngModel)]="nuevaSolicitud.descripcion" name="descripcion" placeholder="Cuéntanos los detalles" />
+        <label class="label" for="fechaInicio">Fecha de inicio (opcional)</label>
+        <input id="fechaInicio" class="input" type="date" [(ngModel)]="nuevaSolicitud.fechaInicio" name="fechaInicio" />
       </div>
-      <button type="submit" class="btn-primario">Enviar solicitud</button>
+      <div>
+        <label class="label" for="fechaFin">Fecha de fin (opcional)</label>
+        <input id="fechaFin" class="input" type="date" [(ngModel)]="nuevaSolicitud.fechaFin" name="fechaFin" [min]="nuevaSolicitud.fechaInicio || ''" />
+      </div>
+      <div [ngClass]="tipoSeleccionado === 'Otro' ? 'sm:col-span-2 lg:col-span-4' : 'sm:col-span-2 lg:col-span-1'">
+        <label class="label" for="descSolicitud">Descripción</label>
+        <input id="descSolicitud" class="input" type="text" autocomplete="off" [(ngModel)]="nuevaSolicitud.descripcion" name="descripcion" placeholder="Cuéntanos los detalles…" />
+      </div>
+    </div>
+    <div class="mt-4 flex justify-end">
+      <button type="submit" class="btn-primario" [disabled]="enviando" [attr.aria-busy]="enviando">
+        {{ enviando ? "Enviando…" : "Enviar solicitud" }}
+      </button>
     </div>
   </form>
 
+  <!-- Barra de búsqueda tolerante y filtro por estado -->
+  <div *ngIf="!cargando" class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+      <div class="w-full sm:w-72">
+        <label class="sr-only" for="filtroSolicitudes">Buscar solicitudes</label>
+        <input id="filtroSolicitudes" class="input !min-h-[40px] text-sm" type="search" autocomplete="off" spellcheck="false"
+               [(ngModel)]="filtroTexto" (ngModelChange)="aplicarFiltro()" name="filtroSolicitudes"
+               placeholder="Buscar por empleado, tipo, descripción o #ID…" />
+      </div>
+      <label class="sr-only" for="filtroEstadoSol">Estado</label>
+      <select id="filtroEstadoSol" class="input !min-h-[40px] !w-auto text-sm" [(ngModel)]="filtroEstado" (ngModelChange)="aplicarFiltro()" name="filtroEstadoSol">
+        <option value="todos">Todos los estados</option>
+        <option value="3">Pendiente</option>
+        <option value="4">En revisión</option>
+        <option value="5">Aprobado</option>
+        <option value="6">Rechazado</option>
+      </select>
+    </div>
+    <span class="text-xs font-bold tabular-nums text-muted-foreground">
+      Mostrando {{ listaFiltrada.length }} solicitudes
+    </span>
+  </div>
+
   <p *ngIf="cargando" role="status" class="vacio">Cargando solicitudes…</p>
 
-  <div class="tabla-wrap animate-fade-up [animation-delay:160ms]" *ngIf="!cargando && solicitudes.length > 0">
-    <table class="tabla min-w-[900px]">
-      <caption class="sr-only">Listado de solicitudes</caption>
-      <thead>
-        <tr>
-          <th scope="col">ID</th>
-          <th scope="col" *ngIf="authService.esAdministrador()">Empleado</th>
-          <th scope="col">Tipo</th>
-          <th scope="col">Descripción</th>
-          <th scope="col">Estado</th>
-          <th scope="col">Respuesta</th>
-          <th scope="col">Fecha</th>
-          <th scope="col">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let s of solicitudes">
-          <td class="font-bold text-navy-800">#{{ s.id_solicitud }}</td>
-          <td class="min-w-[170px]" *ngIf="authService.esAdministrador()"><span class="font-semibold">{{ s.nombre_empleado }}</span><br /><small class="text-ink-muted">{{ s.cedula_empleado }}</small></td>
-          <td class="font-semibold">{{ s.tipo_solicitud }}</td>
-          <td class="min-w-[220px]">{{ s.descripcion }}</td>
-          <td>
-            <span [ngClass]="{'insignia-ok': s.id_estado === 5, 'insignia-err': s.id_estado === 6, 'insignia-warn': s.id_estado === 3 || s.id_estado === 4}">{{ ESTADOS[s.id_estado || 3] }}</span>
-          </td>
-          <td>{{ s.respuesta || "—" }}</td>
-          <td class="whitespace-nowrap">{{ s.fecha_creacion | date:"dd/MM/yyyy hh:mm a" }}</td>
-          <td class="min-w-[230px]">
-            <div class="flex flex-wrap gap-1.5">
-              <ng-container *ngIf="authService.esAdministrador(); else soloEliminar">
-                <button type="button" class="btn-mini" (click)="cambiarEstado(s, 5)" [attr.aria-label]="'Aprobar solicitud ' + s.id_solicitud">Aprobar</button>
-                <button type="button" class="btn-mini" (click)="cambiarEstado(s, 4)" [attr.aria-label]="'Poner en revisión la solicitud ' + s.id_solicitud">En revisión</button>
-                <button type="button" class="btn-mini-peligro" (click)="abrirRechazo(s)" [attr.aria-label]="'Rechazar solicitud ' + s.id_solicitud">Rechazar</button>
-                <button type="button" class="btn-mini-peligro" (click)="eliminar(s.id_solicitud)" [attr.aria-label]="'Eliminar solicitud ' + s.id_solicitud">Eliminar</button>
-              </ng-container>
-              <ng-template #soloEliminar>
-                <button type="button" class="btn-mini-peligro" (click)="eliminar(s.id_solicitud)" [disabled]="s.id_estado !== 3" [attr.aria-label]="'Eliminar solicitud ' + s.id_solicitud">Eliminar</button>
-              </ng-template>
+  <ng-container *ngIf="!cargando && listaFiltrada.length > 0">
+    <!-- Vista tarjetas (móvil, tablet y pantallas medianas: 0 scroll horizontal) -->
+    <div class="grid gap-3 md:grid-cols-2 xl:hidden animate-fade-up [animation-delay:120ms]">
+      <article *ngFor="let s of listaFiltrada; trackBy: trackBySolicitud" class="card !p-4 flex flex-col justify-between gap-3">
+        <div>
+          <div class="flex flex-wrap items-start justify-between gap-2">
+            <div class="min-w-0 flex-1">
+              <span class="font-mono text-xs font-bold text-primary">#{{ s.id_solicitud }}</span>
+              <h3 class="text-sm font-bold text-foreground-heading">{{ s.tipo_solicitud }}</h3>
+              <p *ngIf="esAdmin && vistaAdmin === 'gestion'" class="mt-0.5 text-xs font-semibold text-muted-foreground">
+                {{ s.nombre_empleado }} <span *ngIf="s.cedula_empleado" class="font-mono tabular-nums" translate="no">· {{ s.cedula_empleado }}</span>
+              </p>
             </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <span [ngClass]="{'insignia-ok': s.id_estado === 5, 'insignia-err': s.id_estado === 6, 'insignia-warn': s.id_estado === 3 || s.id_estado === 4}">
+              {{ ESTADOS[s.id_estado || 3] }}
+            </span>
+          </div>
 
-  <div class="vacio" *ngIf="!cargando && solicitudes.length === 0">
-    <strong class="text-base text-navy-800">No hay solicitudes todavía</strong>
-    <span>{{ authService.esAdministrador() ? "Cuando un empleado envíe una, aparecerá aquí." : "Crea tu primera solicitud con el formulario de arriba." }}</span>
-  </div>
+          <dl class="mt-3 space-y-1.5 text-xs">
+            <div *ngIf="s.fecha_inicio">
+              <dt class="inline font-bold text-muted-foreground">Fechas: </dt>
+              <dd class="inline tabular-nums text-foreground">
+                {{ fechaCorta(s.fecha_inicio) }}<span *ngIf="s.fecha_fin && s.fecha_fin !== s.fecha_inicio"> – {{ fechaCorta(s.fecha_fin) }}</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="inline font-bold text-muted-foreground">Descripción: </dt>
+              <dd class="inline break-words text-foreground">{{ s.descripcion || "—" }}</dd>
+            </div>
+            <div *ngIf="s.respuesta">
+              <dt class="inline font-bold text-muted-foreground">Respuesta: </dt>
+              <dd class="inline break-words text-foreground">{{ s.respuesta }}</dd>
+            </div>
+            <div>
+              <dt class="inline font-bold text-muted-foreground">Creada: </dt>
+              <dd class="inline tabular-nums text-muted-foreground">{{ s.fecha_creacion | date:"dd/MM/yyyy hh:mm a" }}</dd>
+            </div>
+          </dl>
+        </div>
 
-  <!-- Diálogo de rechazo -->
-  <div class="fixed inset-0 z-[400] flex animate-fade-in items-center justify-center bg-navy-950/60 p-4 backdrop-blur-sm" *ngIf="rechazando" (click)="cancelarRechazo()" (keydown.escape)="cancelarRechazo()">
-    <div class="w-full max-w-md animate-scale-in rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="titulo-rechazo" (click)="$event.stopPropagation()">
-      <h2 class="text-xl font-extrabold text-navy-800" id="titulo-rechazo">Rechazar solicitud #{{ rechazando.id_solicitud }}</h2>
-      <p class="ayuda mt-1">Escribe el motivo. El empleado lo verá en su lista de solicitudes.</p>
-      <label for="motivo" class="label mt-4">Motivo del rechazo</label>
-      <textarea id="motivo" class="input resize-y" [(ngModel)]="motivo" name="motivo" rows="4" maxlength="1000" placeholder="Explica por qué se rechaza" autofocus></textarea>
+        <div class="flex flex-wrap items-center gap-1.5 border-t border-border/70 pt-3">
+          <ng-container *ngIf="esAdmin && vistaAdmin === 'gestion'; else accionesEmpCard">
+            <ng-container *ngIf="!esFinalizada(s); else resueltaCard">
+              <button type="button" class="btn-mini" (click)="abrirResolucion(s, 5)">Aprobar</button>
+              <button *ngIf="s.id_estado === 3" type="button" class="btn-mini" (click)="cambiarEstado(s, 4)">En revisión</button>
+              <button type="button" class="btn-mini-peligro" (click)="abrirResolucion(s, 6)">Rechazar</button>
+              <button type="button" class="btn-mini-peligro" (click)="eliminar(s)">Eliminar</button>
+            </ng-container>
+            <ng-template #resueltaCard>
+              <span class="text-xs font-semibold text-muted-foreground">Resuelta (definitiva)</span>
+            </ng-template>
+          </ng-container>
+          <ng-template #accionesEmpCard>
+            <button type="button" class="btn-mini-peligro" (click)="eliminar(s)" [disabled]="s.id_estado !== 3">Eliminar</button>
+          </ng-template>
+        </div>
+      </article>
+    </div>
+
+    <!-- Vista tabla compacta (escritorio xl+: sin min-width fijo, 0 scroll horizontal) -->
+    <div class="tabla-wrap hidden xl:block animate-fade-up [animation-delay:140ms]">
+      <table class="tabla">
+        <caption class="sr-only">Listado de solicitudes</caption>
+        <thead>
+          <tr>
+            <th scope="col">Solicitud</th>
+            <th scope="col" *ngIf="esAdmin && vistaAdmin === 'gestion'">Empleado</th>
+            <th scope="col">Detalle</th>
+            <th scope="col">Estado y respuesta</th>
+            <th scope="col">Creada</th>
+            <th scope="col">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of listaFiltrada; trackBy: trackBySolicitud">
+            <td>
+              <span class="block font-semibold text-foreground-heading">{{ s.tipo_solicitud }}</span>
+              <small class="font-mono text-xs font-bold tabular-nums text-muted-foreground">#{{ s.id_solicitud }}</small>
+              <div *ngIf="s.fecha_inicio" class="mt-0.5 text-[11px] tabular-nums text-muted-foreground">
+                {{ fechaCorta(s.fecha_inicio) }}<span *ngIf="s.fecha_fin && s.fecha_fin !== s.fecha_inicio"> – {{ fechaCorta(s.fecha_fin) }}</span>
+              </div>
+            </td>
+            <td *ngIf="esAdmin && vistaAdmin === 'gestion'">
+              <span class="block font-semibold">{{ s.nombre_empleado }}</span>
+              <small class="font-mono text-xs tabular-nums text-muted-foreground" translate="no">{{ s.cedula_empleado }}</small>
+            </td>
+            <td class="text-xs text-foreground">{{ s.descripcion || "—" }}</td>
+            <td>
+              <span [ngClass]="{'insignia-ok': s.id_estado === 5, 'insignia-err': s.id_estado === 6, 'insignia-warn': s.id_estado === 3 || s.id_estado === 4}">
+                {{ ESTADOS[s.id_estado || 3] }}
+              </span>
+              <p *ngIf="s.respuesta" class="mt-1 text-xs text-muted-foreground">{{ s.respuesta }}</p>
+            </td>
+            <td class="text-xs tabular-nums text-muted-foreground">{{ s.fecha_creacion | date:"dd/MM/yyyy hh:mm a" }}</td>
+            <td>
+              <div class="flex flex-wrap items-center gap-1.5">
+                <ng-container *ngIf="esAdmin && vistaAdmin === 'gestion'; else accionesEmpleado">
+                  <ng-container *ngIf="!esFinalizada(s); else estadoFinalBadge">
+                    <button type="button" class="btn-mini" (click)="abrirResolucion(s, 5)" [attr.aria-label]="'Aprobar solicitud ' + s.id_solicitud">Aprobar</button>
+                    <button *ngIf="s.id_estado === 3" type="button" class="btn-mini" (click)="cambiarEstado(s, 4)" [attr.aria-label]="'Poner en revisión la solicitud ' + s.id_solicitud">En revisión</button>
+                    <button type="button" class="btn-mini-peligro" (click)="abrirResolucion(s, 6)" [attr.aria-label]="'Rechazar solicitud ' + s.id_solicitud">Rechazar</button>
+                    <button type="button" class="btn-mini-peligro" (click)="eliminar(s)" [attr.aria-label]="'Eliminar solicitud ' + s.id_solicitud">Eliminar</button>
+                  </ng-container>
+                  <ng-template #estadoFinalBadge>
+                    <span class="text-xs font-semibold text-muted-foreground">Resuelta (definitiva)</span>
+                  </ng-template>
+                </ng-container>
+                <ng-template #accionesEmpleado>
+                  <button type="button" class="btn-mini-peligro" (click)="eliminar(s)" [disabled]="s.id_estado !== 3" [attr.aria-label]="'Eliminar solicitud ' + s.id_solicitud">Eliminar</button>
+                </ng-template>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </ng-container>
+
+  <app-estado-vacio *ngIf="!cargando && listaFiltrada.length === 0"
+    titulo="No hay solicitudes para mostrar"
+    [descripcion]="filtroTexto || filtroEstado !== 'todos'
+      ? 'No se encontraron solicitudes con el filtro aplicado.'
+      : (esAdmin && vistaAdmin === 'gestion' ? 'Cuando un empleado envíe una, aparecerá aquí.' : 'Crea tu primera solicitud con el formulario de arriba.')">
+  </app-estado-vacio>
+
+  <!-- Diálogo de aprobación / rechazo -->
+  <div class="fixed inset-0 z-[400] flex animate-fade-in items-center justify-center bg-navy-950/60 p-4 backdrop-blur-sm overscroll-contain" *ngIf="resolviendo" (click)="cancelarResolucion()">
+    <div class="w-full max-w-md animate-scale-in rounded-card border border-border bg-surface p-6 shadow-dialog overscroll-contain" role="dialog" aria-modal="true" aria-labelledby="titulo-resolucion" aria-describedby="desc-resolucion" (click)="$event.stopPropagation()">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <h2 class="text-xl font-extrabold text-foreground-heading" id="titulo-resolucion">
+            {{ resolviendo.nuevoEstado === 6 ? "Rechazar" : "Aprobar" }} solicitud #{{ resolviendo.solicitud.id_solicitud }}
+          </h2>
+          <p id="desc-resolucion" class="ayuda mt-1">
+            {{ resolviendo.nuevoEstado === 6
+              ? "Escribe el motivo del rechazo. El empleado lo verá en su listado de solicitudes."
+              : "Puedes dejar una nota opcional para el empleado. Esta decisión será definitiva." }}
+          </p>
+        </div>
+        <button type="button" class="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors duration-fast hover:bg-surface-subtle hover:text-foreground" aria-label="Cerrar diálogo" (click)="cancelarResolucion()">
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <label for="motivo" class="label mt-4">{{ resolviendo.nuevoEstado === 6 ? "Motivo del rechazo *" : "Nota de aprobación (opcional)" }}</label>
+      <textarea id="motivo" class="input resize-y" [(ngModel)]="motivo" name="motivo" rows="4" maxlength="1000"
+                [placeholder]="resolviendo.nuevoEstado === 6 ? 'Explica por qué se rechaza…' : 'Ej. Aprobado, recuerda coordinar entrega de pendientes…'"></textarea>
       <div class="mt-5 flex flex-wrap justify-end gap-2">
-        <button type="button" class="btn-secundario" (click)="cancelarRechazo()">Volver</button>
-        <button type="button" class="btn-peligro" [disabled]="!motivo.trim()" (click)="confirmarRechazo()">Rechazar solicitud</button>
+        <button type="button" class="btn-secundario" (click)="cancelarResolucion()">Volver</button>
+        <button type="button" [ngClass]="resolviendo.nuevoEstado === 6 ? 'btn-peligro' : 'btn-exito'"
+                [disabled]="resolviendo.nuevoEstado === 6 && !motivo.trim()" (click)="confirmarResolucion()">
+          {{ resolviendo.nuevoEstado === 6 ? "Rechazar solicitud" : "Confirmar aprobación" }}
+        </button>
       </div>
     </div>
   </div>
+
+  <app-confirmar-dialogo
+    [abierto]="!!solicitudAEliminar"
+    titulo="Eliminar solicitud"
+    [descripcion]="'¿Seguro que deseas eliminar la solicitud #' + (solicitudAEliminar?.id_solicitud || '') + ' (' + (solicitudAEliminar?.tipo_solicitud || '') + ')? Esta acción no se puede deshacer.'"
+    textoConfirmar="Eliminar solicitud"
+    variante="peligro"
+    (confirmar)="confirmarEliminacion()"
+    (cancelar)="solicitudAEliminar = null">
+  </app-confirmar-dialogo>
 </div>

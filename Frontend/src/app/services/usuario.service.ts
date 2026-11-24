@@ -3,6 +3,22 @@ import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Observable, catchError, map, of, throwError } from "rxjs";
 import { environment } from "../../environments/environment";
 import { Usuario } from "../models/usuario.model";
+import { RespuestaApi } from "../models/catalogos";
+
+interface UsuarioApiRow {
+  id_usuario: number;
+  tipo_documento?: string;
+  numero_documento?: string;
+  primer_nombre?: string;
+  segundo_nombre?: string;
+  primer_apellido?: string;
+  segundo_apellido?: string;
+  genero?: string;
+  nombre: string;
+  correo: string;
+  id_rol: number;
+  id_estado: number;
+}
 
 @Injectable({ providedIn: "root" })
 export class UsuarioService {
@@ -10,8 +26,7 @@ export class UsuarioService {
 
   constructor(private http: HttpClient) {}
 
-  // La API devuelve los campos en snake_case (id_usuario...); aquí se pasan a camelCase.
-  private mapear(r: any): Usuario {
+  private mapear(r: UsuarioApiRow): Usuario {
     return {
       idUsuario: r.id_usuario,
       tipoDocumento: r.tipo_documento || "CC",
@@ -29,26 +44,25 @@ export class UsuarioService {
   }
 
   listar(): Observable<Usuario[]> {
-    return this.http.get<any[]>(this.baseUrl).pipe(map((lista) => lista.map((r) => this.mapear(r))));
+    return this.http.get<UsuarioApiRow[]>(this.baseUrl).pipe(map((lista) => lista.map((r) => this.mapear(r))));
   }
 
-  /** Devuelve el usuario con ese número de documento, o null si no existe. */
   buscarPorDocumento(numero: string): Observable<Usuario | null> {
-    return this.http.get<any>(`${this.baseUrl}?documento=${encodeURIComponent(numero.trim())}`).pipe(
+    return this.http.get<UsuarioApiRow>(`${this.baseUrl}?documento=${encodeURIComponent(numero.trim())}`).pipe(
       map((r) => this.mapear(r)),
       catchError((err: HttpErrorResponse) => (err.status === 404 ? of(null) : throwError(() => err)))
     );
   }
 
-  crear(usuario: Usuario): Observable<any> {
-    return this.http.post(this.baseUrl, usuario);
+  crear(usuario: Usuario): Observable<RespuestaApi> {
+    return this.http.post<RespuestaApi>(this.baseUrl, usuario);
   }
 
-  actualizar(usuario: Usuario): Observable<any> {
-    return this.http.put(this.baseUrl, usuario);
+  actualizar(usuario: Usuario): Observable<RespuestaApi> {
+    return this.http.put<RespuestaApi>(this.baseUrl, usuario);
   }
 
-  eliminar(id: number): Observable<any> {
-    return this.http.delete(`${this.baseUrl}?id=${id}`);
+  eliminar(id: number): Observable<RespuestaApi> {
+    return this.http.delete<RespuestaApi>(`${this.baseUrl}?id=${id}`);
   }
 }

@@ -1,10 +1,15 @@
-# Dependencias de Node en cualquier subcarpeta
+# Dependencias
 **/node_modules/
 
-# Variables de entorno y configuraciones locales
+# Entorno y sistema
 .env
 .DS_Store
 
-# Archivos de compilación o distribución
+# Compilación y caché
 dist/
 build/
+Frontend/.angular/
+
+# Archivos generados en tiempo de ejecución
+Backend/certificados/
+Backend/temp/
